@@ -305,14 +305,14 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
         <div class="stat-card"><div class="stat-label">Solde net</div><div class="stat-val" id="s-solde">—</div><div id="s-solde-badge"></div></div>
         <div class="stat-card"><div class="stat-label">Dépenses totales</div><div class="stat-val red" id="s-dep">—</div><div class="stat-sub" id="s-dep-sub"></div></div>
         <div class="stat-card"><div class="stat-label">Revenus totaux</div><div class="stat-val green" id="s-rev">—</div><div class="stat-sub" id="s-rev-sub"></div></div>
-        <div class="stat-card"><div class="stat-label">Transactions ⭐</div><div class="stat-val accent" id="s-imp">—</div><div class="stat-sub">dépenses évitables</div></div>
+        <div class="stat-card"><div class="stat-label">Important ⭐</div><div class="stat-val accent" id="s-imp">—</div><div class="stat-sub">marquées importantes</div></div>
       </div>
       <div class="three-col">
-        <div class="card"><div class="card-title">Flux mensuel</div><div class="chart-box"><canvas id="chart-monthly"></canvas></div></div>
-        <div class="card"><div class="card-title">Dépenses du mois — évitables vs nécessaires</div><div class="donut-box"><canvas id="chart-donut"></canvas></div><div class="donut-legend" id="donut-legend"></div></div>
+        <div class="card"><div class="card-title">Flux mensuel</div><div class="chart-box" style="height:230px"><canvas id="chart-monthly"></canvas></div></div>
+        <div class="card"><div class="card-title">Dépenses du mois</div><div class="donut-box" id="donut-wrap"><canvas id="chart-donut"></canvas></div><div class="donut-legend" id="donut-legend"></div></div>
         <div class="card"><div class="card-title">Par catégorie</div><div id="cat-bars"></div></div>
       </div>
-      <div class="card"><div class="card-title">Transactions évitables récentes</div><div id="dash-imp-table"></div></div>
+      <div class="card"><div class="card-title">Transactions importantes récentes</div><div id="dash-imp-table"></div></div>
     </div>
 
     <!-- TRANSACTIONS -->
@@ -331,7 +331,7 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
           <option value="">Tous types</option>
           <option value="depense">Dépenses</option>
           <option value="revenu">Revenus</option>
-          <option value="important">⭐ Évitables</option>
+          <option value="important">⭐ Important</option>
         </select>
         <button class="btn btn-ghost btn-sm" id="btn-reset-filters">✕ Reset</button>
       </div>
@@ -449,7 +449,7 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
         <div class="form-group"><label class="lbl">Mode de paiement</label><select id="f-mode"></select></div>
         <div class="form-group" style="justify-content:flex-end">
           <label class="lbl">Options</label>
-          <label class="check-label"><input type="checkbox" id="f-important"/> Dépense évitable</label>
+          <label class="check-label"><input type="checkbox" id="f-important"/> Important</label>
         </div>
       </div>
       <div class="form-group" style="margin-top:2px">
@@ -758,20 +758,107 @@ function renderMonthlyChart() {
   var months = Object.keys(byMonth).sort().slice(-6);
   var labels = months.map(function(m) {
     var p = m.split('-');
-    return new Date(parseInt(p[0]), parseInt(p[1])-1, 1).toLocaleDateString('fr-FR', { month:'short', year:'2-digit' });
+    return new Date(parseInt(p[0]), parseInt(p[1])-1, 1)
+      .toLocaleDateString('fr-FR', { month:'short', year:'2-digit' })
+      .replace('.','').replace(/^./,function(s){return s.toUpperCase();});
   });
+
+  var canvas = el('chart-monthly');
+  var ctx = canvas.getContext('2d');
+
+  /* Gradients */
+  var gradDep = ctx.createLinearGradient(0, 0, 0, 220);
+  gradDep.addColorStop(0,   'rgba(176,48,48,0.18)');
+  gradDep.addColorStop(1,   'rgba(176,48,48,0.01)');
+  var gradRev = ctx.createLinearGradient(0, 0, 0, 220);
+  gradRev.addColorStop(0,   'rgba(45,122,80,0.18)');
+  gradRev.addColorStop(1,   'rgba(45,122,80,0.01)');
+
   if (chartMonthly) chartMonthly.destroy();
-  chartMonthly = new Chart(el('chart-monthly'), {
-    type:'bar',
-    data:{ labels:labels, datasets:[
-      { label:'Dépenses', data:months.map(function(m){return byMonth[m].dep;}), backgroundColor:'#f5e3e3', borderColor:'#b03030', borderWidth:2, borderRadius:5 },
-      { label:'Revenus',  data:months.map(function(m){return byMonth[m].rev;}), backgroundColor:'#e3f0e9', borderColor:'#2d7a50', borderWidth:2, borderRadius:5 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ font:{family:'Lato',size:12}, color:'#6e6560' }}},
-      scales:{
-        x:{ grid:{display:false}, ticks:{color:'#6e6560',font:{family:'Lato'}} },
-        y:{ grid:{color:'#f0ece6'}, ticks:{color:'#6e6560',font:{family:'Lato'}, callback:function(v){ return new Intl.NumberFormat('fr-FR',{notation:'compact'}).format(v); }}}
+  chartMonthly = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Dépenses',
+          data: months.map(function(m){ return byMonth[m].dep; }),
+          borderColor: '#b03030',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#b03030',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          backgroundColor: gradDep,
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Revenus',
+          data: months.map(function(m){ return byMonth[m].rev; }),
+          borderColor: '#2d7a50',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#2d7a50',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          backgroundColor: gradRev,
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            font: { family:'Lato', size:12 },
+            color: '#6e6560',
+            usePointStyle: true,
+            pointStyleWidth: 10,
+            padding: 16
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1c1815',
+          titleColor: '#aea8a2',
+          bodyColor: '#ffffff',
+          padding: 12,
+          cornerRadius: 8,
+          titleFont: { family:'Lato', size:11 },
+          bodyFont: { family:'Lato', size:13, weight:'700' },
+          callbacks: {
+            label: function(ctx) {
+              return '  ' + ctx.dataset.label + ' : ' +
+                new Intl.NumberFormat('fr-FR').format(ctx.raw) + ' Rs';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color:'#aea8a2', font:{ family:'Lato', size:11 } }
+        },
+        y: {
+          grid: { color:'rgba(233,228,220,0.6)', drawBorder:false },
+          border: { display: false, dash: [4,4] },
+          ticks: {
+            color:'#aea8a2',
+            font:{ family:'Lato', size:11 },
+            padding: 8,
+            callback: function(v) {
+              return new Intl.NumberFormat('fr-FR',{notation:'compact'}).format(v) + ' Rs';
+            }
+          }
+        }
       }
     }
   });
@@ -781,24 +868,80 @@ function renderDonutChart(ym) {
   var monthDeps = data.filter(function(d) { return d.montant < 0 && d.date.slice(0,7) === ym; });
   var imp    = Math.abs(monthDeps.filter(function(d){return d.important;}).reduce(function(s,d){return s+parseFloat(d.montant);},0));
   var nonImp = Math.abs(monthDeps.filter(function(d){return !d.important;}).reduce(function(s,d){return s+parseFloat(d.montant);},0));
-  var donutParent = el('chart-donut').parentElement;
-  if (chartDonut) chartDonut.destroy();
-  if (imp === 0 && nonImp === 0) {
-    donutParent.innerHTML = "<div class='empty'><div class='empty-icon'>📊</div><p>Aucune dépense ce mois</p></div>";
+  var total  = imp + nonImp;
+
+  var donutWrap = el('donut-wrap');
+  donutWrap.innerHTML = "<canvas id='chart-donut'></canvas>";
+  if (chartDonut) { chartDonut.destroy(); chartDonut = null; }
+
+  if (total === 0) {
+    donutWrap.innerHTML = "<div class='empty'><div class='empty-icon'>📊</div><p>Aucune dépense ce mois</p></div>";
     el('donut-legend').innerHTML = '';
     return;
   }
+
+  var pctImp = Math.round(imp / total * 100);
+  var centerPlugin = {
+    id: 'centerText',
+    afterDraw: function(chart) {
+      var ctx2 = chart.ctx;
+      var cx = (chart.chartArea.left + chart.chartArea.right) / 2;
+      var cy = (chart.chartArea.top  + chart.chartArea.bottom) / 2;
+      ctx2.save();
+      ctx2.textAlign = 'center'; ctx2.textBaseline = 'middle';
+      ctx2.font = "700 21px 'Playfair Display', serif";
+      ctx2.fillStyle = '#1c1815';
+      ctx2.fillText(pctImp + '%', cx, cy - 10);
+      ctx2.font = "400 11px 'Lato', sans-serif";
+      ctx2.fillStyle = '#aea8a2';
+      ctx2.fillText('Important', cx, cy + 11);
+      ctx2.restore();
+    }
+  };
+
   chartDonut = new Chart(el('chart-donut'), {
-    type:'doughnut',
-    data:{ labels:['Évitables','Nécessaires'], datasets:[{ data:[imp,nonImp], backgroundColor:['#bf5c2c','#e9e4dc'], borderColor:['#bf5c2c','#d0c8be'], borderWidth:2, hoverOffset:6 }]},
-    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%',
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(ctx){ return ' ' + fmtAbs(ctx.raw); }}}}
+    type: 'doughnut',
+    plugins: [centerPlugin],
+    data: {
+      labels: ['Important', 'Pas important'],
+      datasets: [{
+        data: [imp, nonImp],
+        backgroundColor: ['#bf5c2c', '#e9e4dc'],
+        borderColor: ['#fff', '#fff'],
+        borderWidth: 3,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '72%',
+      animation: { animateRotate: true, duration: 700 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c1815', titleColor: '#aea8a2', bodyColor: '#fff',
+          padding: 12, cornerRadius: 8,
+          titleFont: { family:'Lato', size:11 },
+          bodyFont: { family:'Lato', size:13, weight:'700' },
+          callbacks: { label: function(ctx) {
+            var pct = total ? Math.round(ctx.raw / total * 100) : 0;
+            return '  ' + fmtAbs(ctx.raw) + '  (' + pct + '%)';
+          }}
+        }
+      }
     }
   });
-  var total = imp + nonImp;
+
   el('donut-legend').innerHTML =
-    "<div class='donut-legend-item'><div class='donut-legend-dot' style='background:#bf5c2c'></div><span>⭐ Évitables : <strong>" + fmtAbs(imp) + "</strong> (" + (total?Math.round(imp/total*100):0) + "%)</span></div>" +
-    "<div class='donut-legend-item'><div class='donut-legend-dot' style='background:#e9e4dc;border:1.5px solid #d0c8be'></div><span>Nécessaires : <strong>" + fmtAbs(nonImp) + "</strong> (" + (total?Math.round(nonImp/total*100):0) + "%)</span></div>";
+    "<div class='donut-legend-item'>" +
+      "<div class='donut-legend-dot' style='background:#bf5c2c'></div>" +
+      "<div><div style='font-weight:700;font-size:13px'>Important</div>" +
+      "<div style='color:var(--text2);font-size:12px'>" + fmtAbs(imp) + " &middot; " + pctImp + "%</div></div>" +
+    "</div>" +
+    "<div class='donut-legend-item'>" +
+      "<div class='donut-legend-dot' style='background:#e9e4dc;border:2px solid #c8bfb5'></div>" +
+      "<div><div style='font-weight:700;font-size:13px'>Pas important</div>" +
+      "<div style='color:var(--text2);font-size:12px'>" + fmtAbs(nonImp) + " &middot; " + (total?Math.round(nonImp/total*100):0) + "%</div></div>" +
+    "</div>";
 }
 
 function renderCatBars() {
@@ -819,7 +962,7 @@ function renderCatBars() {
 function renderImpTable() {
   var imps = data.filter(function(d){return d.important;}).slice(0,6);
   var wrap = el('dash-imp-table');
-  if (!imps.length) { wrap.innerHTML = "<div class='empty'><div class='empty-icon'>⭐</div><p>Aucune dépense évitable enregistrée</p></div>"; return; }
+  if (!imps.length) { wrap.innerHTML = "<div class='empty'><div class='empty-icon'>⭐</div><p>Aucune transaction importante enregistrée</p></div>"; return; }
   wrap.innerHTML = "<div class='table-wrap'><table><thead><tr><th>Date</th><th>Description</th><th>Catégorie</th><th>Montant</th></tr></thead><tbody>" +
     imps.map(function(t){
       return "<tr><td style='color:var(--text3);font-size:12.5px;white-space:nowrap'>" + fmtDate(t.date) + "</td><td>" + escHtml(t.description) + "</td><td><span class='cat-pill " + catClass(t.categorie) + "'>" + t.categorie + "</span></td><td class='" + (t.montant<0?'montant-neg':'montant-pos') + "'>" + fmtSign(parseFloat(t.montant)) + "</td></tr>";
@@ -983,6 +1126,46 @@ function setupImport() {
   });
 }
 
+/* Convertit n'importe quel format de nombre en float
+   Gère : 1800 / 1 800 / 1.800,50 / 1,800.50 / -1800 / (1800) / 1 800,00 Rs / etc. */
+function parseMontant(raw) {
+  if (!raw) return 0;
+  var s = String(raw).trim();
+  // Parenthèses comptables → négatif : (1800) = -1800
+  var neg = /^\(.*\)$/.test(s);
+  s = s.replace(/[()]/g, '');
+  // Supprimer tout sauf chiffres, virgule, point, signe
+  s = s.replace(/[^0-9.,'\-]/g, '');
+  // Détecter format : si virgule ET point présents
+  var hasComma = s.indexOf(',') !== -1;
+  var hasDot   = s.indexOf('.') !== -1;
+  if (hasComma && hasDot) {
+    // Dernier séparateur = décimal
+    var lastComma = s.lastIndexOf(',');
+    var lastDot   = s.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // format 1.800,50 → enlever points, virgule = point
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      // format 1,800.50 → enlever virgules
+      s = s.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    // Soit séparateur milliers (1,800) soit décimal (1,5)
+    var parts = s.split(',');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // décimal : 1800,50 → 1800.50
+      s = s.replace(',', '.');
+    } else {
+      // milliers : 1,800,000 → 1800000
+      s = s.replace(/,/g, '');
+    }
+  }
+  var n = parseFloat(s);
+  if (isNaN(n)) return 0;
+  return neg ? -Math.abs(n) : n;
+}
+
 async function parseCSV(text) {
   var msg   = el('import-msg');
   var lines = text.trim().split(/\r?\n/).filter(function(l){ return l.trim(); });
@@ -1002,8 +1185,8 @@ async function parseCSV(text) {
   var rows = [];
   for (var i=1;i<lines.length;i++) {
     var v    = splitLine(lines[i]);
-    var rawM = cols.montant!==-1 ? (v[cols.montant]||'0').replace(/\s/g,'').replace(',','.') : '0';
-    var m    = parseFloat(rawM);
+    var rawM = cols.montant !== -1 ? parseMontant(v[cols.montant]) : 0;
+    var m    = -Math.abs(rawM); /* Import = toujours dépense (négatif) */
     var dRaw = cols.date!==-1 ? (v[cols.date]||'') : new Date().toISOString().slice(0,10);
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(dRaw)) { var dp=dRaw.split('/'); dRaw=dp[2]+'-'+dp[1]+'-'+dp[0]; }
     rows.push({ date:dRaw.slice(0,10), categorie:cols.cat!==-1?(v[cols.cat]||'Autres'):'Autres',
