@@ -207,12 +207,126 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
 .alert-success { background:var(--green-light);  color:var(--green); }
 .alert-danger  { background:var(--red-light);    color:var(--red); }
 
-/* ── LOADING SPINNER ── */
-.spinner-overlay { display:none; position:fixed; inset:0; background:rgba(247,245,242,.7); z-index:300; align-items:center; justify-content:center; flex-direction:column; gap:14px; }
-.spinner-overlay.on { display:flex; }
-.spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.spinner-label { font-size:13px; color:var(--text2); }
+/* ── LOADING OVERLAY ── */
+.spinner-overlay {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  align-items: center; justify-content: center;
+  background: rgba(247,245,242,0.82);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.spinner-overlay.on { display: flex; }
+
+.spinner-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 36px 44px;
+  box-shadow: 0 8px 48px rgba(28,24,20,.13);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px;
+  min-width: 200px;
+  animation: fadeInUp .25s ease;
+}
+@keyframes fadeInUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Trois points pulsants */
+.spinner-dots {
+  display: flex; gap: 10px; align-items: center; height: 20px;
+}
+.spinner-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+.spinner-dot:nth-child(2) { animation-delay: .2s; background: #d47040; }
+.spinner-dot:nth-child(3) { animation-delay: .4s; background: #e8a080; }
+@keyframes dotPulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: .4; }
+  40%            { transform: scale(1);   opacity: 1; }
+}
+
+.spinner-label {
+  font-family: 'Lato', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--text2);
+  letter-spacing: .02em;
+}
+
+
+/* ── SUMMARY BAR ── */
+.summary-bar {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 13px 18px;
+  margin-bottom: 14px; box-shadow: var(--shadow);
+}
+.summary-item { display: flex; flex-direction: column; }
+.summary-item-label { font-size: 10.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing:.05em; margin-bottom: 3px; }
+.summary-item-val   { font-family: 'Playfair Display', serif; font-size: 18px; }
+.summary-divider    { width: 1px; height: 32px; background: var(--border); flex-shrink: 0; }
+
+/* ── PAGINATION ── */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 4px; gap: 10px; flex-wrap: wrap;
+}
+.pagination-info { font-size: 12.5px; color: var(--text3); }
+.pagination-btns { display: flex; gap: 5px; }
+.pag-btn {
+  border: 1px solid var(--border); background: var(--surface);
+  border-radius: var(--r-sm); padding: 5px 11px;
+  font-family: 'Lato', sans-serif; font-size: 12.5px; font-weight: 700;
+  color: var(--text2); cursor: pointer; transition: all .12s;
+  min-width: 34px; text-align: center;
+}
+.pag-btn:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+.pag-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pag-btn:disabled { opacity: .35; cursor: default; }
+
+/* ── PERIOD NAV ── */
+.period-menu {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .3s ease;
+}
+.period-menu.open { max-height: 600px; }
+
+.period-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; border-radius: var(--r-sm); border: none; background: none;
+  cursor: pointer; font-family: 'Lato', sans-serif; font-size: 12.5px;
+  color: var(--text2); text-align: left; transition: all .12s; margin-bottom: 1px;
+}
+.period-btn:hover { background: var(--surface2); color: var(--text); }
+.period-btn.active { background: var(--accent-light); color: var(--accent); font-weight: 700; }
+.period-btn-amount { font-size: 11px; color: var(--text3); font-weight: 400; }
+.period-btn.active .period-btn-amount { color: var(--accent); opacity: .7; }
+#period-toggle:hover { color: var(--text); }
+#period-toggle:hover #period-arrow { color: var(--accent); }
+
+/* ── PERF TABLE ── */
+.perf-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid var(--border); gap: 10px;
+}
+.perf-row:last-child { border-bottom: none; }
+.perf-rank { font-size: 11px; font-weight: 700; color: var(--text3); width: 22px; flex-shrink: 0; }
+.perf-label { font-size: 13.5px; flex: 1; }
+.perf-bar-wrap { width: 80px; flex-shrink: 0; }
+.perf-bar-bg2  { background: var(--border); border-radius: 4px; height: 5px; }
+.perf-bar-fill2 { background: var(--accent); border-radius: 4px; height: 5px; }
+.perf-val { font-size: 12.5px; font-weight: 700; color: var(--red); white-space: nowrap; text-align: right; min-width: 90px; }
+
+/* ── AVG CARD ── */
+.avg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.avg-item { background: var(--surface2); border-radius: var(--r-sm); padding: 12px 14px; border: 1px solid var(--border); }
+.avg-item-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing:.04em; margin-bottom: 6px; }
+.avg-item-val   { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--red); }
+.avg-item-sub   { font-size: 11px; color: var(--text3); margin-top: 3px; }
 
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
@@ -245,10 +359,16 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
 </head>
 <body>
 
-<!-- SPINNER -->
+<!-- LOADER -->
 <div class="spinner-overlay" id="spinner">
-  <div class="spinner"></div>
-  <div class="spinner-label" id="spinner-label">Chargement…</div>
+  <div class="spinner-card">
+    <div class="spinner-dots">
+      <div class="spinner-dot"></div>
+      <div class="spinner-dot"></div>
+      <div class="spinner-dot"></div>
+    </div>
+    <div class="spinner-label" id="spinner-label">Chargement…</div>
+  </div>
 </div>
 
 <div class="app">
@@ -273,6 +393,11 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
     <button class="nav-btn" data-page="import"><span class="nav-icon">📂</span> Importer CSV</button>
     <div class="nav-section">Configuration</div>
     <button class="nav-btn" data-page="parametres"><span class="nav-icon">⚙️</span> Paramètres</button>
+    <div class="nav-section" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" id="period-toggle" onclick="togglePeriodMenu()">
+      <span>Périodes</span>
+      <span id="period-arrow" style="font-size:9px;transition:transform .2s">▼</span>
+    </div>
+    <div id="period-nav" class="period-menu"></div>
     <div class="sidebar-footer">
       <div id="sb-count">—</div>
       <div id="sb-budget" class="sb-budget-info"></div>
@@ -312,7 +437,14 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
         <div class="card"><div class="card-title">Dépenses du mois</div><div class="donut-box" id="donut-wrap"><canvas id="chart-donut"></canvas></div><div class="donut-legend" id="donut-legend"></div></div>
         <div class="card"><div class="card-title">Par catégorie</div><div id="cat-bars"></div></div>
       </div>
-      <div class="card"><div class="card-title">Transactions importantes récentes</div><div id="dash-imp-table"></div></div>
+      <div class="two-col" id="perf-grid">
+        <div class="card"><div class="card-title">📅 Jours les plus dépensiers</div><div id="perf-days"></div></div>
+        <div class="card"><div class="card-title">📆 Mois les plus dépensiers</div><div id="perf-months"></div></div>
+      </div>
+      <div class="two-col">
+        <div class="card"><div class="card-title">🔁 Dépenses récurrentes</div><div id="perf-recurrent"></div></div>
+        <div class="card"><div class="card-title">📊 Moyenne journalière</div><div id="perf-avg"></div></div>
+      </div>
     </div>
 
     <!-- TRANSACTIONS -->
@@ -324,6 +456,7 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
           <button class="btn btn-primary" id="btn-add">+ Ajouter</button>
         </div>
       </div>
+      <!-- Filters row 1 -->
       <div class="filters">
         <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="f-search" placeholder="Rechercher…"/></div>
         <select id="f-cat"><option value="">Toutes catégories</option></select>
@@ -333,8 +466,19 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
           <option value="revenu">Revenus</option>
           <option value="important">⭐ Important</option>
         </select>
+      </div>
+      <!-- Filters row 2 — dates -->
+      <div class="filters" style="margin-top:-6px">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text3);white-space:nowrap">Du</span>
+          <input type="date" id="f-date-from" style="width:150px;flex-shrink:0"/>
+          <span style="font-size:12px;color:var(--text3);white-space:nowrap">au</span>
+          <input type="date" id="f-date-to" style="width:150px;flex-shrink:0"/>
+        </div>
         <button class="btn btn-ghost btn-sm" id="btn-reset-filters">✕ Reset</button>
       </div>
+      <!-- Summary bar -->
+      <div id="tx-summary-bar"></div>
       <div class="table-wrap">
         <table>
           <thead><tr>
@@ -349,6 +493,8 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
           <tbody id="tx-tbody"></tbody>
         </table>
       </div>
+      <!-- Pagination -->
+      <div id="tx-pagination"></div>
     </div>
 
     <!-- IMPORT -->
@@ -570,8 +716,10 @@ var DEFAULT_BUDGET = 60000;
 var data      = [];
 var settings  = { budget: DEFAULT_BUDGET };
 var sortField = 'date', sortDir = 'desc';
-var filterSearch = '', filterCat = '', filterType = '';
+var filterSearch = '', filterCat = '', filterType = '', filterDateFrom = '', filterDateTo = '';
+var currentPage = 1, PAGE_SIZE = 25;
 var chartMonthly = null, chartDonut = null;
+var activePeriod = null; /* { label, from, to } pour navigation sidebar */
 
 /* ═══════════════════════════════════════════════════════════════════
    INIT
@@ -603,6 +751,7 @@ var chartMonthly = null, chartDonut = null;
 
   hideSpinner();
   renderDashboard();
+  renderPeriodNav();
   updateSidebarInfo();
 })();
 
@@ -724,7 +873,8 @@ function renderDashboard() {
   renderMonthlyChart();
   renderDonutChart(ym);
   renderCatBars();
-  renderImpTable();
+  renderPerfTables();
+  renderPeriodNav();
   updateSidebarInfo();
 }
 
@@ -959,14 +1109,176 @@ function renderCatBars() {
   }).join('');
 }
 
-function renderImpTable() {
-  var imps = data.filter(function(d){return d.important;}).slice(0,6);
-  var wrap = el('dash-imp-table');
-  if (!imps.length) { wrap.innerHTML = "<div class='empty'><div class='empty-icon'>⭐</div><p>Aucune transaction importante enregistrée</p></div>"; return; }
-  wrap.innerHTML = "<div class='table-wrap'><table><thead><tr><th>Date</th><th>Description</th><th>Catégorie</th><th>Montant</th></tr></thead><tbody>" +
-    imps.map(function(t){
-      return "<tr><td style='color:var(--text3);font-size:12.5px;white-space:nowrap'>" + fmtDate(t.date) + "</td><td>" + escHtml(t.description) + "</td><td><span class='cat-pill " + catClass(t.categorie) + "'>" + t.categorie + "</span></td><td class='" + (t.montant<0?'montant-neg':'montant-pos') + "'>" + fmtSign(parseFloat(t.montant)) + "</td></tr>";
-    }).join('') + "</tbody></table></div>";
+function renderImpTable() {} /* kept for compat — replaced by renderPerfTables */
+
+function renderPerfTables() {
+  var deps = data.filter(function(d){ return d.montant < 0; });
+  if (!deps.length) {
+    ['perf-days','perf-months','perf-recurrent','perf-avg'].forEach(function(id){
+      el(id).innerHTML = "<div class='empty'><p>Aucune donnée</p></div>";
+    });
+    return;
+  }
+
+  /* ── 1. Jours les plus dépensiers ── */
+  var byDay = {};
+  deps.forEach(function(d){
+    byDay[d.date] = (byDay[d.date]||0) + Math.abs(parseFloat(d.montant));
+  });
+  var topDays = Object.keys(byDay).map(function(k){ return [k,byDay[k]]; })
+    .sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var maxDay = topDays[0][1];
+  el('perf-days').innerHTML = topDays.map(function(e,i){
+    var pct = Math.round(e[1]/maxDay*100);
+    var d = new Date(e[0]+'T00:00:00');
+    var label = d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+    return "<div class='perf-row'>" +
+      "<div class='perf-rank'>#" + (i+1) + "</div>" +
+      "<div class='perf-label'>" + label + "</div>" +
+      "<div class='perf-bar-wrap'><div class='perf-bar-bg2'><div class='perf-bar-fill2' style='width:" + pct + "%'></div></div></div>" +
+      "<div class='perf-val'>" + fmtAbs(e[1]) + "</div>" +
+    "</div>";
+  }).join('');
+
+  /* ── 2. Mois les plus dépensiers ── */
+  var byMonth2 = {};
+  deps.forEach(function(d){
+    var m = d.date.slice(0,7);
+    byMonth2[m] = (byMonth2[m]||0) + Math.abs(parseFloat(d.montant));
+  });
+  var topMonths = Object.keys(byMonth2).map(function(k){ return [k,byMonth2[k]]; })
+    .sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var maxMonth = topMonths[0][1];
+  el('perf-months').innerHTML = topMonths.map(function(e,i){
+    var pct = Math.round(e[1]/maxMonth*100);
+    var p = e[0].split('-');
+    var label = new Date(parseInt(p[0]),parseInt(p[1])-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    return "<div class='perf-row'>" +
+      "<div class='perf-rank'>#" + (i+1) + "</div>" +
+      "<div class='perf-label'>" + label + "</div>" +
+      "<div class='perf-bar-wrap'><div class='perf-bar-bg2'><div class='perf-bar-fill2' style='width:" + pct + "%'></div></div></div>" +
+      "<div class='perf-val'>" + fmtAbs(e[1]) + "</div>" +
+    "</div>";
+  }).join('');
+
+  /* ── 3. Dépenses récurrentes (même description plusieurs fois) ── */
+  var byDesc = {};
+  deps.forEach(function(d){
+    var key = d.description.trim().toLowerCase();
+    if (!key) return;
+    if (!byDesc[key]) byDesc[key] = { label: d.description, total:0, count:0 };
+    byDesc[key].total += Math.abs(parseFloat(d.montant));
+    byDesc[key].count++;
+  });
+  var recurrent = Object.values(byDesc).filter(function(v){ return v.count >= 2; })
+    .sort(function(a,b){ return b.total-a.total; }).slice(0,5);
+  if (!recurrent.length) {
+    el('perf-recurrent').innerHTML = "<div class='empty'><p>Aucune dépense récurrente détectée</p></div>";
+  } else {
+    el('perf-recurrent').innerHTML = recurrent.map(function(e,i){
+      return "<div class='perf-row'>" +
+        "<div class='perf-rank'>#" + (i+1) + "</div>" +
+        "<div class='perf-label' style='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px' title='" + escHtml(e.label) + "'>" + escHtml(e.label) + "<span style='font-size:11px;color:var(--text3);margin-left:6px'>×" + e.count + "</span></div>" +
+        "<div class='perf-val'>" + fmtAbs(e.total) + "</div>" +
+      "</div>";
+    }).join('');
+  }
+
+  /* ── 4. Moyennes ── */
+  var totalDep = deps.reduce(function(s,d){ return s+Math.abs(parseFloat(d.montant)); },0);
+  var daysSet  = Object.keys(byDay);
+  var months2Set = Object.keys(byMonth2);
+  var avgDay   = daysSet.length   ? totalDep / daysSet.length   : 0;
+  var avgMonth = months2Set.length ? totalDep / months2Set.length : 0;
+  /* Weekend vs weekday */
+  var weDep = 0, weCount = 0, wdDep = 0, wdCount = 0;
+  deps.forEach(function(d){
+    var dow = new Date(d.date+'T00:00:00').getDay();
+    var v = Math.abs(parseFloat(d.montant));
+    if (dow === 0 || dow === 6) { weDep += v; weCount++; }
+    else { wdDep += v; wdCount++; }
+  });
+  el('perf-avg').innerHTML =
+    "<div class='avg-grid'>" +
+      "<div class='avg-item'><div class='avg-item-label'>Moy. / jour actif</div><div class='avg-item-val'>" + fmtAbs(avgDay) + "</div><div class='avg-item-sub'>" + daysSet.length + " jours avec dépenses</div></div>" +
+      "<div class='avg-item'><div class='avg-item-label'>Moy. / mois</div><div class='avg-item-val'>" + fmtAbs(avgMonth) + "</div><div class='avg-item-sub'>" + months2Set.length + " mois analysés</div></div>" +
+      "<div class='avg-item'><div class='avg-item-label'>Semaine (lun–ven)</div><div class='avg-item-val'>" + fmtAbs(wdCount?wdDep/wdCount:0) + "</div><div class='avg-item-sub'>moy. par transaction</div></div>" +
+      "<div class='avg-item'><div class='avg-item-label'>Week-end</div><div class='avg-item-val'>" + fmtAbs(weCount?weDep/weCount:0) + "</div><div class='avg-item-sub'>moy. par transaction</div></div>" +
+    "</div>";
+}
+
+function togglePeriodMenu() {
+  var menu  = el('period-nav');
+  var arrow = el('period-arrow');
+  var isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open', !isOpen);
+  arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function renderPeriodNav() {
+  /* Build list of months present in data */
+  var months = {};
+  data.forEach(function(d){
+    var m = d.date.slice(0,7);
+    if (!months[m]) months[m] = { dep:0, count:0 };
+    if (d.montant < 0) months[m].dep += Math.abs(parseFloat(d.montant));
+    months[m].count++;
+  });
+  var sorted = Object.keys(months).sort().reverse().slice(0,12);
+  var wrap = el('period-nav');
+  if (!sorted.length) { wrap.innerHTML = ''; return; }
+
+  /* "All" button */
+  var html = "<button class='period-btn' id='period-all' onclick='setPeriod(null)'>" +
+    "<span>Tout afficher</span><span class='period-btn-amount'>" + data.length + " tx</span>" +
+  "</button>";
+
+  sorted.forEach(function(ym){
+    var p = ym.split('-');
+    var label = new Date(parseInt(p[0]),parseInt(p[1])-1,1)
+      .toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    var from = ym + '-01';
+    var to   = ym + '-31';
+    html += "<button class='period-btn' data-period='" + ym + "' onclick='setPeriodByEl(this)'>" +
+      "<span>" + label + "</span>" +
+      "<span class='period-btn-amount'>" + fmtAbs(months[ym].dep) + "</span>" +
+    "</button>";
+  });
+  wrap.innerHTML = html;
+  /* Auto-open the menu if there's data */
+  if (sorted.length) {
+    var menu = el('period-nav');
+    menu.classList.add('open');
+    var arrow = el('period-arrow');
+    if (arrow) arrow.style.transform = 'rotate(180deg)';
+  }
+}
+
+function setPeriodByEl(btn) {
+  var ym = btn.getAttribute('data-period');
+  if (!ym) return;
+  var p = ym.split('-');
+  var label = new Date(parseInt(p[0]),parseInt(p[1])-1,1)
+    .toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  label = label.charAt(0).toUpperCase() + label.slice(1);
+  setPeriod(ym, label, ym+'-01', ym+'-31');
+}
+
+function setPeriod(ym, label, from, to) {
+  if (!ym) {
+    activePeriod = null;
+    document.querySelectorAll('.period-btn').forEach(function(b){ b.classList.remove('active'); });
+    var ab = el('period-all'); if(ab) ab.classList.add('active');
+  } else {
+    activePeriod = { label: label, from: from, to: to };
+    document.querySelectorAll('.period-btn').forEach(function(b){ b.classList.remove('active'); });
+    var pb = document.querySelector('.period-btn[data-period="'+ym+'"]');
+    if (pb) pb.classList.add('active');
+  }
+  currentPage = 1;
+  navigate('transactions');
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -974,11 +1286,20 @@ function renderImpTable() {
 ═══════════════════════════════════════════════════════════════════ */
 function getFiltered() {
   var d = data.slice();
-  if (filterSearch) { var q = filterSearch.toLowerCase(); d = d.filter(function(t){ return (t.description+' '+t.categorie).toLowerCase().indexOf(q) !== -1; }); }
-  if (filterCat)    d = d.filter(function(t){ return t.categorie === filterCat; });
-  if (filterType === 'depense')   d = d.filter(function(t){ return t.montant < 0; });
-  else if (filterType === 'revenu')    d = d.filter(function(t){ return t.montant > 0; });
-  else if (filterType === 'important') d = d.filter(function(t){ return t.important; });
+  if (filterSearch) {
+    var q = filterSearch.toLowerCase();
+    d = d.filter(function(t){ return (t.description+' '+t.categorie+' '+t.mode).toLowerCase().indexOf(q) !== -1; });
+  }
+  if (filterCat)  d = d.filter(function(t){ return t.categorie === filterCat; });
+  if (filterType === 'depense')    d = d.filter(function(t){ return t.montant < 0; });
+  else if (filterType === 'revenu')     d = d.filter(function(t){ return t.montant > 0; });
+  else if (filterType === 'important')  d = d.filter(function(t){ return t.important; });
+  if (filterDateFrom) d = d.filter(function(t){ return t.date >= filterDateFrom; });
+  if (filterDateTo)   d = d.filter(function(t){ return t.date <= filterDateTo; });
+  /* Period filter from sidebar */
+  if (activePeriod) {
+    d = d.filter(function(t){ return t.date >= activePeriod.from && t.date <= activePeriod.to; });
+  }
   d.sort(function(a,b) {
     var va = a[sortField], vb = b[sortField];
     if (sortField === 'montant') { va = Math.abs(parseFloat(va)); vb = Math.abs(parseFloat(vb)); }
@@ -991,10 +1312,42 @@ function getFiltered() {
 
 function renderTable() {
   var rows = getFiltered();
-  el('tx-sub').textContent = rows.length + ' résultat' + (rows.length !== 1 ? 's' : '');
+  var total = rows.length;
+
+  /* Summary bar */
+  var totalDep = rows.filter(function(r){ return r.montant < 0; }).reduce(function(s,r){ return s+parseFloat(r.montant); }, 0);
+  var totalRev = rows.filter(function(r){ return r.montant > 0; }).reduce(function(s,r){ return s+parseFloat(r.montant); }, 0);
+  var sb = el('tx-summary-bar');
+  if (total > 0) {
+    var periodLabel = activePeriod ? activePeriod.label : (filterSearch || filterCat || filterDateFrom || filterDateTo ? 'Sélection' : 'Toutes');
+    sb.innerHTML =
+      "<div class='summary-bar'>" +
+        "<div class='summary-item'><div class='summary-item-label'>Période</div><div class='summary-item-val' style='font-size:14px;font-family:Lato'>" + periodLabel + "</div></div>" +
+        "<div class='summary-divider'></div>" +
+        "<div class='summary-item'><div class='summary-item-label'>Transactions</div><div class='summary-item-val'>" + total + "</div></div>" +
+        "<div class='summary-divider'></div>" +
+        "<div class='summary-item'><div class='summary-item-label'>Total dépenses</div><div class='summary-item-val montant-neg'>" + fmtAbs(totalDep) + "</div></div>" +
+        (totalRev > 0 ? "<div class='summary-divider'></div><div class='summary-item'><div class='summary-item-label'>Total revenus</div><div class='summary-item-val montant-pos'>" + fmtAbs(totalRev) + "</div></div>" : "") +
+        "<div class='summary-divider'></div>" +
+        "<div class='summary-item'><div class='summary-item-label'>Solde</div><div class='summary-item-val " + (totalDep+totalRev>=0?'green':'red') + "'>" + fmtSign(totalDep+totalRev) + "</div></div>" +
+      "</div>";
+  } else { sb.innerHTML = ''; }
+
+  el('tx-sub').textContent = total + ' résultat' + (total !== 1 ? 's' : '');
+
+  /* Pagination */
+  var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  var start = (currentPage - 1) * PAGE_SIZE;
+  var pageRows = rows.slice(start, start + PAGE_SIZE);
+
   var tbody = el('tx-tbody');
-  if (!rows.length) { tbody.innerHTML = "<tr><td colspan='7'><div class='empty'><div class='empty-icon'>📭</div><p>Aucune transaction trouvée</p></div></td></tr>"; return; }
-  tbody.innerHTML = rows.map(function(t) {
+  if (!pageRows.length) {
+    tbody.innerHTML = "<tr><td colspan='7'><div class='empty'><div class='empty-icon'>📭</div><p>Aucune transaction trouvée</p></div></td></tr>";
+    el('tx-pagination').innerHTML = '';
+    return;
+  }
+  tbody.innerHTML = pageRows.map(function(t) {
     var m = parseFloat(t.montant);
     return "<tr>" +
       "<td style='color:var(--text3);font-size:12.5px;white-space:nowrap'>" + fmtDate(t.date) + "</td>" +
@@ -1004,11 +1357,45 @@ function renderTable() {
       "<td style='max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='" + t.description.replace(/'/g,"&#39;") + "'>" + escHtml(t.description) + "</td>" +
       "<td style='text-align:center'>" + (t.important ? '⭐' : "<span style='color:var(--border)'>★</span>") + "</td>" +
       "<td style='white-space:nowrap'>" +
-        "<button class='icon-btn edit' onclick='openEdit(\"" + t.id + "\")' title='Modifier'>✏️</button> " +
-        "<button class='icon-btn del'  onclick='deleteTx(\"" + t.id + "\")' title='Supprimer'>🗑</button>" +
+        "<button class='icon-btn edit' data-id='" + t.id + "' onclick='openEdit(this.dataset.id)' title='Modifier'>✏️</button> " +
+        "<button class='icon-btn del' data-id='" + t.id + "' onclick='deleteTx(this.dataset.id)' title='Supprimer'>🗑</button>" +
       "</td></tr>";
   }).join('');
+
+  renderPagination(total, totalPages);
 }
+
+function renderPagination(total, totalPages) {
+  var pg = el('tx-pagination');
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+  var start = (currentPage-1)*PAGE_SIZE + 1;
+  var end   = Math.min(currentPage*PAGE_SIZE, total);
+  var btns  = '';
+  btns += "<button class='pag-btn' onclick='goPage(" + (currentPage-1) + ")'" + (currentPage===1?' disabled':'') + ">&#8249;</button>";
+  var pages = [];
+  if (totalPages <= 7) { for (var i=1;i<=totalPages;i++) pages.push(i); }
+  else {
+    pages = [1];
+    if (currentPage > 3) pages.push('…');
+    for (var i=Math.max(2,currentPage-1); i<=Math.min(totalPages-1,currentPage+1); i++) pages.push(i);
+    if (currentPage < totalPages-2) pages.push('…');
+    pages.push(totalPages);
+  }
+  pages.forEach(function(p) {
+    if (p === '…') btns += "<span style='padding:5px 6px;color:var(--text3)'>…</span>";
+    else btns += "<button class='pag-btn" + (p===currentPage?' active':'') + "' onclick='goPage(" + p + ")'>" + p + "</button>";
+  });
+  btns += "<button class='pag-btn' onclick='goPage(" + (currentPage+1) + ")'" + (currentPage===totalPages?' disabled':'') + ">&#8250;</button>";
+  pg.innerHTML = "<div class='pagination'><span class='pagination-info'>" + start + "–" + end + " sur " + total + "</span><div class='pagination-btns'>" + btns + "</div></div>";
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderTable();
+  var tw = document.querySelector('.table-wrap');
+  if (tw) tw.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
 
 function setupFilters() {
   document.querySelectorAll('thead th.sortable').forEach(function(th) {
@@ -1016,22 +1403,27 @@ function setupFilters() {
       var f = th.dataset.sort;
       if (sortField === f) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
       else { sortField = f; sortDir = 'desc'; }
-      renderTable();
+      currentPage = 1; renderTable();
     });
   });
-  el('f-search').addEventListener('input',  function(e){ filterSearch = e.target.value; renderTable(); });
-  el('f-cat').addEventListener('change',    function(e){ filterCat    = e.target.value; renderTable(); });
-  el('f-type').addEventListener('change',   function(e){ filterType   = e.target.value; renderTable(); });
+  el('f-search').addEventListener('input',  function(e){ filterSearch = e.target.value; currentPage=1; renderTable(); });
+  el('f-cat').addEventListener('change',    function(e){ filterCat    = e.target.value; currentPage=1; renderTable(); });
+  el('f-type').addEventListener('change',   function(e){ filterType   = e.target.value; currentPage=1; renderTable(); });
+  el('f-date-from').addEventListener('change', function(e){ filterDateFrom = e.target.value; currentPage=1; renderTable(); });
+  el('f-date-to').addEventListener('change',   function(e){ filterDateTo   = e.target.value; currentPage=1; renderTable(); });
   el('btn-reset-filters').addEventListener('click', function() {
-    filterSearch=''; filterCat=''; filterType='';
+    filterSearch=''; filterCat=''; filterType=''; filterDateFrom=''; filterDateTo='';
+    activePeriod = null; currentPage = 1;
     el('f-search').value=''; el('f-cat').value=''; el('f-type').value='';
+    el('f-date-from').value=''; el('f-date-to').value='';
+    document.querySelectorAll('.period-btn').forEach(function(b){ b.classList.remove('active'); });
     renderTable();
   });
   el('btn-export').addEventListener('click', function() {
     var rows  = getFiltered();
     var header = ['Date','Categorie','Montant','Mode','Description','Important'];
-    var lines  = rows.map(function(t){ return [t.date,t.categorie,t.montant,t.mode,'"'+t.description.replace(/"/g,'""')+'"',t.important?'Oui':'Non'].join(';'); });
-    var csv = [header.join(';')].concat(lines).join('\n');
+    var csvlines = rows.map(function(t){ return [t.date,t.categorie,t.montant,t.mode,'"'+t.description.replace(/"/g,'""')+'"',t.important?'Oui':'Non'].join(';'); });
+    var csv = [header.join(';')].concat(csvlines).join('\n');
     var a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
     a.download = 'transactions_' + currentYearMonth() + '.csv';
