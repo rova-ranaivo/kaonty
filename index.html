@@ -328,6 +328,63 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
 .avg-item-val   { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--red); }
 .avg-item-sub   { font-size: 11px; color: var(--text3); margin-top: 3px; }
 
+
+/* ── PERIODES PAGE ── */
+.period-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+.period-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all .18s;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.period-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--border);
+  transition: background .18s;
+}
+.period-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(28,24,20,.10); }
+.period-card:hover::before { background: var(--accent); }
+.period-card.active-card { border-color: var(--accent); background: var(--accent-light); }
+.period-card.active-card::before { background: var(--accent); }
+
+.period-card-month { font-family: 'Playfair Display', serif; font-size: 17px; margin-bottom: 14px; }
+.period-card-stats { display: flex; flex-direction: column; gap: 7px; }
+.period-card-row { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; }
+.period-card-row-label { color: var(--text3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing:.04em; }
+.period-card-row-val   { font-weight: 700; }
+.period-card-bar { height: 4px; background: var(--border); border-radius: 4px; margin-top: 10px; }
+.period-card-bar-fill { height: 4px; background: var(--accent); border-radius: 4px; transition: width .4s; }
+.period-all-btn {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 14px 20px; cursor: pointer;
+  transition: all .15s; width: 100%; margin-bottom: 20px;
+  box-shadow: var(--shadow); font-family: 'Lato', sans-serif;
+}
+.period-all-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+.period-all-btn.active-card { border-color: var(--accent); background: var(--accent-light); }
+.period-all-icon { font-size: 22px; }
+.period-all-text { font-size: 14px; font-weight: 700; color: var(--text); }
+.period-all-sub  { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.period-year-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px; color: var(--text3);
+  margin: 22px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
 
@@ -367,7 +424,7 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
       <div class="spinner-dot"></div>
       <div class="spinner-dot"></div>
     </div>
-    <div class="spinner-label" id="spinner-label">Chargement…</div>
+    <div class="spinner-label" id="spinner-label">Récupération des données…</div>
   </div>
 </div>
 
@@ -393,11 +450,7 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
     <button class="nav-btn" data-page="import"><span class="nav-icon">📂</span> Importer CSV</button>
     <div class="nav-section">Configuration</div>
     <button class="nav-btn" data-page="parametres"><span class="nav-icon">⚙️</span> Paramètres</button>
-    <div class="nav-section" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" id="period-toggle" onclick="togglePeriodMenu()">
-      <span>Périodes</span>
-      <span id="period-arrow" style="font-size:9px;transition:transform .2s">▼</span>
-    </div>
-    <div id="period-nav" class="period-menu"></div>
+    <button class="nav-btn" data-page="periodes"><span class="nav-icon">📅</span> Périodes</button>
     <div class="sidebar-footer">
       <div id="sb-count">—</div>
       <div id="sb-budget" class="sb-budget-info"></div>
@@ -575,6 +628,20 @@ input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); curs
       </div>
     </div>
 
+
+    <!-- PERIODES -->
+    <div class="page" id="page-periodes">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Périodes</div>
+          <div class="page-sub" id="periodes-sub">Naviguer par mois</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" id="btn-period-reset" onclick="setPeriod(null)">✕ Tout afficher</button>
+        </div>
+      </div>
+      <div id="periodes-content"></div>
+    </div>
   </main>
 </div>
 
@@ -725,7 +792,7 @@ var activePeriod = null; /* { label, from, to } pour navigation sidebar */
    INIT
 ═══════════════════════════════════════════════════════════════════ */
 (async function init() {
-  showSpinner('Connexion à la base de données…');
+  showSpinner('Récupération des données…');
   populateSelects();
   setupNav();
   setupMobile();
@@ -828,6 +895,7 @@ function navigate(pageId) {
   if (pageId === 'dashboard')    renderDashboard();
   if (pageId === 'transactions') renderTable();
   if (pageId === 'parametres')   renderSettings();
+  if (pageId === 'periodes')     renderPeriodPage();
 }
 
 function setupMobile() {
@@ -1208,52 +1276,78 @@ function renderPerfTables() {
     "</div>";
 }
 
-function togglePeriodMenu() {
-  var menu  = el('period-nav');
-  var arrow = el('period-arrow');
-  var isOpen = menu.classList.contains('open');
-  menu.classList.toggle('open', !isOpen);
-  arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
-}
+function togglePeriodMenu() {} /* kept for compat */
 
 function renderPeriodNav() {
-  /* Build list of months present in data */
+  /* Kept for compatibility — page rendered on demand via renderPeriodPage() */
+}
+
+function renderPeriodPage() {
   var months = {};
-  data.forEach(function(d){
+  data.forEach(function(d) {
     var m = d.date.slice(0,7);
-    if (!months[m]) months[m] = { dep:0, count:0 };
-    if (d.montant < 0) months[m].dep += Math.abs(parseFloat(d.montant));
+    if (!months[m]) months[m] = { dep:0, rev:0, count:0 };
+    var v = parseFloat(d.montant);
+    if (v < 0) months[m].dep += Math.abs(v);
+    else months[m].rev += v;
     months[m].count++;
   });
-  var sorted = Object.keys(months).sort().reverse().slice(0,12);
-  var wrap = el('period-nav');
-  if (!sorted.length) { wrap.innerHTML = ''; return; }
 
-  /* "All" button */
-  var html = "<button class='period-btn' id='period-all' onclick='setPeriod(null)'>" +
-    "<span>Tout afficher</span><span class='period-btn-amount'>" + data.length + " tx</span>" +
+  var sorted = Object.keys(months).sort().reverse();
+  el('periodes-sub').textContent = sorted.length + ' mois analysés';
+
+  if (!sorted.length) {
+    el('periodes-content').innerHTML = "<div class='empty'><div class='empty-icon'>📅</div><p>Aucune donnée disponible</p></div>";
+    return;
+  }
+
+  /* Max dep for bar scaling */
+  var maxDep = Math.max.apply(null, sorted.map(function(m){ return months[m].dep; }));
+
+  /* Group by year */
+  var byYear = {};
+  sorted.forEach(function(ym) {
+    var y = ym.slice(0,4);
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push(ym);
+  });
+
+  var html = '';
+
+  /* "Tout afficher" button */
+  var isAll = !activePeriod;
+  html += "<button class='period-all-btn" + (isAll?' active-card':'') + "' onclick='setPeriod(null)'>" +
+    "<span class='period-all-icon'>🗂️</span>" +
+    "<div><div class='period-all-text'>Toutes les transactions</div>" +
+    "<div class='period-all-sub'>" + data.length + " transaction" + (data.length!==1?'s':'') + " · " + sorted.length + " mois</div></div>" +
   "</button>";
 
-  sorted.forEach(function(ym){
-    var p = ym.split('-');
-    var label = new Date(parseInt(p[0]),parseInt(p[1])-1,1)
-      .toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-    label = label.charAt(0).toUpperCase() + label.slice(1);
-    var from = ym + '-01';
-    var to   = ym + '-31';
-    html += "<button class='period-btn' data-period='" + ym + "' onclick='setPeriodByEl(this)'>" +
-      "<span>" + label + "</span>" +
-      "<span class='period-btn-amount'>" + fmtAbs(months[ym].dep) + "</span>" +
-    "</button>";
+  Object.keys(byYear).sort().reverse().forEach(function(year) {
+    html += "<div class='period-year-title'>" + year + "</div>";
+    html += "<div class='period-grid'>";
+    byYear[year].forEach(function(ym) {
+      var p = ym.split('-');
+      var label = new Date(parseInt(p[0]),parseInt(p[1])-1,1)
+        .toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+      var mo = months[ym];
+      var pct = maxDep > 0 ? Math.round(mo.dep/maxDep*100) : 0;
+      var isActive = activePeriod && activePeriod.label === label;
+      var solde = mo.rev - mo.dep;
+      html += "<div class='period-card" + (isActive?' active-card':'') + "' onclick='setPeriodByEl(this)' data-period='" + ym + "'>" +
+        "<div class='period-card-month'>" + label + "</div>" +
+        "<div class='period-card-stats'>" +
+          "<div class='period-card-row'><span class='period-card-row-label'>Dépenses</span><span class='period-card-row-val montant-neg'>" + fmtAbs(mo.dep) + "</span></div>" +
+          (mo.rev > 0 ? "<div class='period-card-row'><span class='period-card-row-label'>Revenus</span><span class='period-card-row-val montant-pos'>" + fmtAbs(mo.rev) + "</span></div>" : "") +
+          "<div class='period-card-row'><span class='period-card-row-label'>Transactions</span><span class='period-card-row-val' style='color:var(--text2)'>" + mo.count + "</span></div>" +
+        "</div>" +
+        "<div class='period-card-bar'><div class='period-card-bar-fill' style='width:" + pct + "%'></div></div>" +
+      "</div>";
+    });
+    html += "</div>";
   });
-  wrap.innerHTML = html;
-  /* Auto-open the menu if there's data */
-  if (sorted.length) {
-    var menu = el('period-nav');
-    menu.classList.add('open');
-    var arrow = el('period-arrow');
-    if (arrow) arrow.style.transform = 'rotate(180deg)';
-  }
+
+  el('periodes-content').innerHTML = html;
 }
 
 function setPeriodByEl(btn) {
@@ -1278,7 +1372,13 @@ function setPeriod(ym, label, from, to) {
     if (pb) pb.classList.add('active');
   }
   currentPage = 1;
-  navigate('transactions');
+  /* If we are on periodes page, navigate to transactions to see filtered results */
+  if (el('page-periodes').classList.contains('active')) {
+    navigate('transactions');
+  } else {
+    renderTable();
+    renderPeriodPage();
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1470,7 +1570,7 @@ async function saveModal() {
     important:   el('f-important').checked
   };
 
-  showSpinner('Enregistrement…');
+  showSpinner('Sauvegarde en cours…');
   var saved;
   if (tx.id) {
     saved = await Store.updateTransaction(tx);
@@ -1495,7 +1595,7 @@ function openEdit(id) {
 
 async function deleteTx(id) {
   if (!confirm('Supprimer cette transaction ?')) return;
-  showSpinner('Suppression…');
+  showSpinner('Suppression en cours…');
   var ok = await Store.deleteTransaction(id);
   hideSpinner();
   if (!ok) { alert('Erreur lors de la suppression.'); return; }
@@ -1590,7 +1690,7 @@ async function parseCSV(text) {
   if (!rows.length) { msg.innerHTML = "<div class='alert alert-danger'>Aucune donnée valide trouvée.</div>"; return; }
   if (!confirm(rows.length + ' ligne(s) détectée(s). Importer maintenant ?')) return;
 
-  showSpinner('Import en cours… (' + rows.length + ' lignes)');
+  showSpinner('Import de ' + rows.length + ' transaction' + (rows.length > 1 ? 's' : '') + '…');
   var ok = await Store.bulkInsert(rows);
   if (ok) {
     data = await Store.loadData();
@@ -1610,7 +1710,7 @@ function setupSettings() {
     var val = parseFloat(el('param-budget').value);
     if (isNaN(val) || val < 0) { alert('Valeur invalide.'); return; }
     settings.budget = val;
-    showSpinner('Sauvegarde…');
+    showSpinner('Mise à jour du budget…');
     await Store.saveSettings(settings);
     hideSpinner();
     var hint = el('settings-saved');
@@ -1621,7 +1721,7 @@ function setupSettings() {
 
   el('btn-reset-data').addEventListener('click', async function() {
     if (!confirm('Supprimer TOUTES les transactions de la base ?')) return;
-    showSpinner('Suppression…');
+    showSpinner('Suppression en cours…');
     var ok = await Store.deleteAll();
     if (ok) {
       data = [];
