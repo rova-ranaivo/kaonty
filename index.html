@@ -2,7 +2,11 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Flux"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <title>Flux — Gestion Personnelle</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -505,6 +509,50 @@ input[type=checkbox]{width:14px;height:14px;accent-color:var(--mint);cursor:poin
   .settings-row-input{width:100%;}
   .settings-row-input input[type=number]{width:100%;}
   .topbar-actions .btn{flex:1;justify-content:center;}
+}
+
+/* ══ iOS NATIVE APP — PATCHES UX ══ */
+/* 0. Supprime le flash gris au tap et élimine le délai 300ms */
+*{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+
+/* 1. Empêche la sélection de texte accidentelle */
+body,div,span,p,h1,h2,h3,h4,td,th,button,label,li{-webkit-user-select:none;user-select:none;}
+input,textarea{-webkit-user-select:text;user-select:text;}
+
+/* 2. Bloque le zoom automatique iOS sur focus input (font-size ≥ 16px obligatoire) */
+input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px !important;}
+
+/* 3. Stoppe le rubber-banding global — body ne défile jamais */
+html{overflow:hidden;height:100%;}
+body{overflow:hidden;height:100%;overscroll-behavior:none;}
+
+/* 4. .app remplit exactement le viewport */
+.app{height:100%;min-height:unset;overflow:hidden;}
+
+/* 5. Seul .main défile — min-height:0 est critique pour overflow en flex */
+.main{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;min-height:0;}
+
+/* 6. Modal scrollable indépendamment */
+.modal{-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
+
+/* 7. Safe-area iPhone X+ (notch & barre home) */
+.mobile-topbar{
+  padding-top:env(safe-area-inset-top,0px);
+  height:calc(var(--topbar-h) + env(safe-area-inset-top,0px));
+}
+#lock-screen{
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(max-width:900px){
+  .main{padding-top:calc(var(--topbar-h) + env(safe-area-inset-top,0px) + 20px);}
+  .fab{right:20px;bottom:calc(24px + env(safe-area-inset-bottom,0px));}
+}
+@media(max-width:560px){
+  .main{padding-top:calc(var(--topbar-h) + env(safe-area-inset-top,0px) + 12px);}
+}
+@media(min-width:901px){
+  .fab{bottom:calc(32px + env(safe-area-inset-bottom,0px));}
 }
 </style>
 </head>
@@ -1494,6 +1542,36 @@ input[type=checkbox]{width:14px;height:14px;accent-color:var(--mint);cursor:poin
     }
 
   } /* end _startApp */
+})();
+
+// ── iOS Native App : bloque pincement-zoom et rubber-banding résiduel ──
+(function(){
+  // Bloque les gestures de zoom Safari iOS (pinch)
+  document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, {passive:false});
+  document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, {passive:false});
+  document.addEventListener('gestureend', function(e){ e.preventDefault(); }, {passive:false});
+
+  // Bloque touchmove sur les éléments non-scrollables → stoppe le rubber-banding iOS < 16
+  document.addEventListener('touchmove', function(e){
+    var t = e.target, canScroll = false;
+    while(t && t !== document.documentElement){
+      var ov = window.getComputedStyle(t).overflowY;
+      if((ov === 'auto' || ov === 'scroll') && t.scrollHeight > t.clientHeight){
+        canScroll = true;
+        break;
+      }
+      t = t.parentElement;
+    }
+    if(!canScroll) e.preventDefault();
+  }, {passive:false});
+
+  // Bloque le double-tap zoom sur Safari (iOS < 13 sans viewport user-scalable=no)
+  var _lastTap = 0;
+  document.addEventListener('touchend', function(e){
+    var now = Date.now();
+    if(now - _lastTap < 300){ e.preventDefault(); }
+    _lastTap = now;
+  }, {passive:false});
 })();
 </script>
 </body>
