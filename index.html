@@ -48,97 +48,73 @@
 
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13.5px;line-height:1.55;}
 
-/* ══ LOCK SCREEN ══ */
-#lock-screen{
+/* ══ LOGIN SCREEN ══ */
+#login-screen{
   position:fixed;inset:0;z-index:9999;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:linear-gradient(145deg,#0F1612 0%,#131A17 40%,#0A1010 100%);
   overflow:hidden;
 }
-#lock-screen::before{
+#login-screen::before{
   content:'';position:absolute;inset:0;
   background:
     radial-gradient(ellipse 60% 40% at 30% 20%,rgba(0,137,123,0.12) 0%,transparent 70%),
     radial-gradient(ellipse 40% 50% at 80% 80%,rgba(0,105,95,0.08) 0%,transparent 60%);
   pointer-events:none;
 }
-/* Grid texture */
-#lock-screen::after{
+#login-screen::after{
   content:'';position:absolute;inset:0;
   background-image:linear-gradient(rgba(0,137,123,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,137,123,0.04) 1px,transparent 1px);
   background-size:40px 40px;
   pointer-events:none;
 }
-
-.lock-center{display:flex;flex-direction:column;align-items:center;gap:0;position:relative;z-index:1;}
-
-.lock-brand{
+.login-center{
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;z-index:1;
+  width:100%;max-width:360px;padding:0 24px;
+}
+.login-brand{
   font-family:var(--serif);font-size:11px;letter-spacing:.3em;
   color:rgba(0,137,123,0.5);text-transform:uppercase;
-  margin-bottom:48px;
+  margin-bottom:40px;
 }
-
-.lock-time{
-  font-family:var(--mono);font-size:clamp(64px,14vw,88px);font-weight:300;
-  color:#E8F0EE;letter-spacing:-3px;line-height:1;
-  text-shadow:0 0 40px rgba(0,137,123,0.3);
+.login-title{
+  font-family:var(--serif);font-size:30px;color:#E8F0EE;
+  letter-spacing:-.02em;margin-bottom:32px;align-self:flex-start;
 }
-.lock-time-sep{animation:blink 1s step-end infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.1;}}
-
-.lock-date{
-  font-family:var(--sans);font-size:13px;font-weight:300;
-  color:rgba(232,240,238,0.4);margin-top:10px;letter-spacing:.06em;
+.login-field{width:100%;margin-bottom:14px;}
+.login-field label{
+  display:block;font-family:var(--mono);font-size:10px;font-weight:500;
+  color:rgba(0,137,123,0.6);letter-spacing:.15em;text-transform:uppercase;margin-bottom:7px;
 }
-
-.lock-divider{
-  width:1px;height:48px;
-  background:linear-gradient(transparent,rgba(0,137,123,0.4),transparent);
-  margin:40px 0 32px;
+.login-field input{
+  background:rgba(232,240,238,0.06);border:1.5px solid rgba(232,240,238,0.12);
+  border-radius:var(--r-sm);padding:12px 14px;
+  font-family:var(--sans);font-size:14px;color:#E8F0EE;
+  width:100%;outline:none;transition:border-color .15s,background .15s;
 }
-
-.lock-label{font-size:11px;font-weight:500;color:rgba(0,137,123,0.6);letter-spacing:.15em;text-transform:uppercase;margin-bottom:24px;}
-
-.pin-dots{display:flex;gap:14px;margin-bottom:36px;}
-.pin-dot{
-  width:10px;height:10px;border-radius:50%;
-  border:1.5px solid rgba(232,240,238,0.2);
-  background:transparent;
-  transition:all .18s cubic-bezier(.34,1.56,.64,1);
+.login-field input:focus{border-color:rgba(0,137,123,0.5);background:rgba(232,240,238,0.09);}
+.login-field input::placeholder{color:rgba(232,240,238,0.18);}
+.login-btn{
+  width:100%;padding:13px;margin-top:8px;
+  background:var(--mint);color:#fff;border:none;border-radius:var(--r-sm);
+  font-family:var(--sans);font-size:14px;font-weight:500;
+  cursor:pointer;transition:all .15s;letter-spacing:.01em;
 }
-.pin-dot.filled{background:var(--mint);border-color:var(--mint);transform:scale(1.2);box-shadow:0 0 12px rgba(0,137,123,0.6);}
-.pin-dot.error{background:#EF5350;border-color:#EF5350;box-shadow:0 0 10px rgba(239,83,80,0.5);}
-
-.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:240px;}
-.num-btn{
-  aspect-ratio:1/1;width:100%;border-radius:50%;
-  border:1px solid rgba(232,240,238,0.08);
-  background:rgba(232,240,238,0.04);
-  font-family:var(--mono);font-size:clamp(20px,4vw,24px);font-weight:300;
-  color:#C8D8D4;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  transition:all .1s;
-  backdrop-filter:blur(4px);
+.login-btn:hover{background:var(--mint-dim);box-shadow:0 4px 16px rgba(0,137,123,0.35);}
+.login-btn:disabled{opacity:.5;cursor:default;box-shadow:none;}
+.login-error{
+  font-family:var(--mono);font-size:11px;color:#EF9A9A;
+  text-align:center;margin-top:14px;min-height:16px;
 }
-.num-btn-letters{font-size:7.5px;font-weight:500;letter-spacing:.14em;color:rgba(200,216,212,0.35);text-transform:uppercase;}
-.num-btn:hover{background:rgba(0,137,123,0.15);border-color:rgba(0,137,123,0.3);color:#E8F0EE;}
-.num-btn:active{transform:scale(0.88);}
-.num-btn.zero{grid-column:2;}
-.num-btn.del{background:transparent;border-color:transparent;font-size:18px;color:rgba(200,216,212,0.4);}
-.num-btn.del:hover{background:rgba(200,216,212,0.06);border-color:rgba(200,216,212,0.1);color:rgba(200,216,212,0.7);}
-.num-btn.empty{background:transparent;border:none;cursor:default;pointer-events:none;}
-
-.lock-error{font-size:11px;color:#EF9A9A;text-align:center;margin-top:20px;min-height:16px;font-family:var(--mono);letter-spacing:.04em;}
-
-.lockout-bar{width:160px;height:1px;background:rgba(232,240,238,0.08);border-radius:4px;margin-top:16px;overflow:hidden;display:none;}
-.lockout-bar-fill{height:100%;background:#EF5350;border-radius:4px;transition:width .3s;}
-.lock-timer{font-size:11px;color:rgba(200,216,212,0.3);text-align:center;margin-top:10px;min-height:16px;font-family:var(--mono);}
-.lock-timer strong{color:rgba(200,216,212,0.6);}
-
-.lock-bottom.shake{animation:pinShake .42s ease;}
-@keyframes pinShake{0%,100%{transform:translateX(0);}18%{transform:translateX(-8px);}36%{transform:translateX(8px);}54%{transform:translateX(-5px);}72%{transform:translateX(5px);}90%{transform:translateX(-2px);}}
-#lock-screen.unlocking{animation:unlockFade .32s ease forwards;}
-@keyframes unlockFade{0%{opacity:1;}100%{opacity:0;transform:scale(1.04);}}
+.btn-logout{
+  width:100%;display:flex;align-items:center;gap:8px;
+  padding:7px 20px;border:none;background:none;cursor:pointer;
+  font-family:var(--sans);font-size:12px;color:var(--text3);
+  text-align:left;transition:all .12s;margin-top:8px;
+}
+.btn-logout:hover{color:var(--red);background:var(--red-light);}
+.btn-logout-icon{font-size:13px;opacity:.7;}
 
 /* ══ SPINNER ══ */
 .spinner-overlay{display:none;position:fixed;inset:0;background:rgba(240,238,233,0.85);backdrop-filter:blur(8px);z-index:800;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
@@ -558,37 +534,21 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
 </head>
 <body>
 
-<!-- ══ LOCK SCREEN ══ -->
-<div id="lock-screen">
-  <div class="lock-center">
-    <div class="lock-brand">Flux · Gestion Personnelle</div>
-    <div class="lock-time" id="lock-clock">--<span class="lock-time-sep">:</span>--</div>
-    <div class="lock-date" id="lock-date"></div>
-    <div class="lock-divider"></div>
-    <div class="lock-label">Code d'accès</div>
-    <div class="pin-dots" id="pin-dots">
-      <div class="pin-dot" id="d0"></div>
-      <div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div>
-      <div class="pin-dot" id="d3"></div>
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-center">
+    <div class="login-brand">Flux · Gestion Personnelle</div>
+    <div class="login-title">Connexion</div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="l-email" placeholder="votre@email.com" autocomplete="email"/>
     </div>
-    <div class="numpad" id="lock-bottom">
-      <button class="num-btn" onclick="_kp('1')">1<div class="num-btn-letters"></div></button>
-      <button class="num-btn" onclick="_kp('2')">2<div class="num-btn-letters">ABC</div></button>
-      <button class="num-btn" onclick="_kp('3')">3<div class="num-btn-letters">DEF</div></button>
-      <button class="num-btn" onclick="_kp('4')">4<div class="num-btn-letters">GHI</div></button>
-      <button class="num-btn" onclick="_kp('5')">5<div class="num-btn-letters">JKL</div></button>
-      <button class="num-btn" onclick="_kp('6')">6<div class="num-btn-letters">MNO</div></button>
-      <button class="num-btn" onclick="_kp('7')">7<div class="num-btn-letters">PQRS</div></button>
-      <button class="num-btn" onclick="_kp('8')">8<div class="num-btn-letters">TUV</div></button>
-      <button class="num-btn" onclick="_kp('9')">9<div class="num-btn-letters">WXYZ</div></button>
-      <button class="num-btn empty"></button>
-      <button class="num-btn zero" onclick="_kp('0')">0<div class="num-btn-letters">+</div></button>
-      <button class="num-btn del" onclick="_kpDel()">⌫</button>
+    <div class="login-field">
+      <label>Mot de passe</label>
+      <input type="password" id="l-password" placeholder="••••••••" autocomplete="current-password"/>
     </div>
-    <div class="lock-error" id="lock-error"></div>
-    <div class="lockout-bar" id="lockout-bar"><div class="lockout-bar-fill" id="lockout-fill"></div></div>
-    <div class="lock-timer" id="lock-timer"></div>
+    <button class="login-btn" id="l-submit">Se connecter</button>
+    <div class="login-error" id="l-error"></div>
   </div>
 </div>
 
@@ -632,6 +592,7 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
       <div class="sf-stat" id="sb-count">—</div>
       <div class="sf-budget" id="sb-budget"></div>
       <div class="sf-sync" id="sb-sync">connexion…</div>
+      <button class="btn-logout" id="btn-logout"><span class="btn-logout-icon">⎋</span> Déconnexion</button>
     </div>
   </aside>
 
@@ -848,166 +809,63 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   🔐 SYSTÈME DE SÉCURITÉ v3 — PIN = heure locale HHMM
+   CLIENT SUPABASE — partagé Auth + App
+═══════════════════════════════════════════════════════ */
+var _SB = window.supabase.createClient(
+  'https://pumbzygkxtiembyuxscu.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWJ6eWdreHRpZW1ieXV4c2N1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1OTIyNjYsImV4cCI6MjA4OTE2ODI2Nn0.eve4s3TH-s7tPKBqkjZdsbMrSsbEEIiMYsZO_TMhLi0'
+);
+
+/* ═══════════════════════════════════════════════════════
+   AUTH — Écran de connexion
 ═══════════════════════════════════════════════════════ */
 (function() {
   'use strict';
-  var LS_KEY = 'cpt_auth_v1';
-  var _SK = (function() {
-    var a = new Uint8Array(32);
-    crypto.getRandomValues(a);
-    return Array.from(a).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-  })();
-  async function _hmac(msg) {
-    var enc = new TextEncoder();
-    var k = await crypto.subtle.importKey('raw', enc.encode(_SK), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
-    var s = await crypto.subtle.sign('HMAC', k, enc.encode(msg));
-    return Array.from(new Uint8Array(s)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  function el(id) { return document.getElementById(id); }
+
+  function showLogin() {
+    el('login-screen').style.display = 'flex';
+    el('main-app').style.display = 'none';
+    el('fab-add').style.display = 'none';
   }
-  async function _sha256(msg) {
-    var enc = new TextEncoder();
-    var s = await crypto.subtle.digest('SHA-256', enc.encode(msg));
-    return Array.from(new Uint8Array(s)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  function showApp() {
+    el('login-screen').style.display = 'none';
+    el('main-app').style.display = 'flex';
+    el('fab-add').style.display = 'flex';
+    _startApp();
   }
-  function _pin4(ts) {
-    var d = new Date(ts);
-    return String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
-  }
-  function _eq(a, b) {
-    if (a.length !== b.length) return false;
-    var x = 0;
-    for (var i = 0; i < a.length; i++) x |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    return x === 0;
-  }
-  async function _buildToken(pin) {
-    return await _sha256('cpt_ok_' + location.hostname + '_' + pin.slice(0,2));
-  }
-  async function _isDeviceTrusted() {
-    try {
-      var stored = localStorage.getItem(LS_KEY);
-      if (!stored) return false;
-      var now = new Date();
-      for (var h = 0; h <= 1; h++) {
-        var d = new Date(now - h * 3600000);
-        var pin = String(d.getHours()).padStart(2,'0') + '00';
-        var expected = await _buildToken(pin);
-        if (_eq(stored, expected)) return true;
-      }
-      return false;
-    } catch(e) { return false; }
-  }
-  async function _trustDevice(pin) {
-    try { var token = await _buildToken(pin); localStorage.setItem(LS_KEY, token); } catch(e) {}
-  }
-  var _pin = '', _attempts = 0, _maxAttempts = 3, _lockoutDuration = 60, _lockoutUntil = 0;
-  var _timerInterval = null, _clockInterval = null;
-  function _el(id) { return document.getElementById(id); }
-  function _updateClock() {
-    var now = new Date();
-    var hh = String(now.getHours()).padStart(2,'0');
-    var mm = String(now.getMinutes()).padStart(2,'0');
-    _el('lock-clock').innerHTML = hh + '<span class="lock-time-sep">:</span>' + mm;
-    var days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-    var months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-    _el('lock-date').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()];
-  }
-  function _startClock() { _updateClock(); _clockInterval = setInterval(_updateClock, 1000); }
-  function _updateDots(state) {
-    for (var i = 0; i < 4; i++) {
-      var d = _el('d' + i);
-      d.classList.remove('filled','error');
-      if (state === 'error') { d.classList.add('error'); }
-      else if (i < _pin.length) d.classList.add('filled');
-    }
-  }
-  function _setError(msg) { _el('lock-error').textContent = msg; }
-  function _shake() {
-    var lb = _el('lock-bottom');
-    lb.classList.remove('shake'); void lb.offsetWidth; lb.classList.add('shake');
-    _updateDots('error');
-    setTimeout(function(){ lb.classList.remove('shake'); _updateDots(); }, 500);
-  }
-  function _startLockoutTimer() {
-    var bar = _el('lockout-bar'), fill = _el('lockout-fill');
-    bar.style.display = 'block';
-    if (_timerInterval) clearInterval(_timerInterval);
-    _timerInterval = setInterval(function() {
-      var rem = Math.ceil((_lockoutUntil - Date.now()) / 1000);
-      if (rem <= 0) {
-        clearInterval(_timerInterval); bar.style.display = 'none';
-        _el('lock-timer').textContent = ''; _setError(''); _attempts = 0; return;
-      }
-      fill.style.width = (rem / _lockoutDuration * 100) + '%';
-      _el('lock-timer').innerHTML = 'Réessayez dans <strong>' + rem + 's</strong>';
-    }, 250);
-  }
-  window._kp = function(digit) {
-    if (_lockoutUntil > Date.now()) return;
-    if (_pin.length >= 4) return;
-    _pin += digit; _updateDots();
-    if (_pin.length === 4) { _verifyPin(); }
-  };
-  window._kpDel = function() {
-    if (_lockoutUntil > Date.now()) return;
-    _pin = _pin.slice(0, -1); _updateDots(); _setError('');
-  };
-  async function _verifyPin() {
-    var entered = _pin; _pin = '';
-    var now = Date.now();
-    var candidates = [_pin4(now - 60000), _pin4(now), _pin4(now + 60000)];
-    var hashEntered = await _hmac(entered);
-    var ok = false;
-    for (var i = 0; i < candidates.length; i++) {
-      if (_eq(hashEntered, await _hmac(candidates[i]))) { ok = true; break; }
-    }
-    if (ok) { await _trustDevice(entered); _unlock(); }
-    else {
-      _attempts++;
-      _updateDots(); _shake();
-      if (_attempts >= _maxAttempts) {
-        _lockoutUntil = Date.now() + _lockoutDuration * 1000;
-        _lockoutDuration = Math.min(_lockoutDuration * 2, 600);
-        _setError('Trop de tentatives incorrectes'); _startLockoutTimer();
-      } else {
-        var left = _maxAttempts - _attempts;
-        _setError('Code incorrect — ' + left + ' essai' + (left > 1 ? 's' : '') + ' restant' + (left > 1 ? 's' : ''));
-        setTimeout(function(){ _setError(''); }, 2000);
-      }
-    }
-  }
-  function _unlock() {
-    clearInterval(_clockInterval);
-    var lock = _el('lock-screen');
-    lock.classList.add('unlocking');
-    setTimeout(function() {
-      lock.style.display = 'none';
-      _el('main-app').style.display = 'flex';
-      _el('fab-add').style.display = 'flex';
-      _startApp();
-    }, 340);
-  }
-  document.addEventListener('keydown', function(e) {
-    if (!_el('lock-screen') || _el('lock-screen').style.display === 'none') return;
-    if (e.key >= '0' && e.key <= '9') window._kp(e.key);
-    else if (e.key === 'Backspace') window._kpDel();
-  });
-  _startClock();
-  _isDeviceTrusted().then(function(trusted) {
-    if (trusted) {
-      _el('lock-screen').style.display = 'none';
-      _el('main-app').style.display = 'flex';
-      _el('fab-add').style.display = 'flex';
-      _startApp();
-    }
+
+  /* Vérifier session existante au chargement */
+  _SB.auth.getSession().then(function(res) {
+    if (res.data && res.data.session) { showApp(); }
+    else { showLogin(); }
   });
 
-  /* ══════════════════════════════════════════
-     APPLICATION
-  ══════════════════════════════════════════ */
-  function _startApp() {
-    var SUPABASE_URL = 'https://pumbzygkxtiembyuxscu.supabase.co';
-    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWJ6eWdreHRpZW1ieXV4c2N1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1OTIyNjYsImV4cCI6MjA4OTE2ODI2Nn0.eve4s3TH-s7tPKBqkjZdsbMrSsbEEIiMYsZO_TMhLi0';
-    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  function doLogin() {
+    var email = el('l-email').value.trim();
+    var password = el('l-password').value;
+    var errEl = el('l-error'), btn = el('l-submit');
+    if (!email || !password) { errEl.textContent = 'Email et mot de passe requis.'; return; }
+    errEl.textContent = '';
+    btn.disabled = true; btn.textContent = 'Connexion…';
+    _SB.auth.signInWithPassword({ email: email, password: password }).then(function(res) {
+      if (res.error) {
+        errEl.textContent = 'Identifiants incorrects.';
+        btn.disabled = false; btn.textContent = 'Se connecter';
+      } else { showApp(); }
+    });
+  }
+
+  el('l-submit').addEventListener('click', doLogin);
+  el('l-email').addEventListener('keydown', function(e){ if(e.key==='Enter') el('l-password').focus(); });
+  el('l-password').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   APPLICATION
+═══════════════════════════════════════════════════════ */
+function _startApp() {
+    var sb = _SB;
 
     var Store = {
       loadData: async function() {
@@ -1049,8 +907,10 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
         return res.data;
       },
       saveSettings: async function(s) {
-        var row = { slot: 'default', budget_mensuel: s.budget, devise: 'Rs' };
-        var res = await sb.from('settings').upsert(row, { onConflict: 'slot' });
+        var userRes = await sb.auth.getUser();
+        var uid = userRes.data && userRes.data.user ? userRes.data.user.id : null;
+        if (!uid) { console.error('Store.saveSettings: utilisateur non connecté'); return false; }
+        var res = await sb.from('settings').upsert({ user_id: uid, budget_mensuel: s.budget, devise: 'Rs' }, { onConflict: 'user_id' });
         if (res.error) { console.error('Store.saveSettings:', res.error); return false; }
         return true;
       }
@@ -1069,7 +929,7 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
     (async function init() {
       showSpinner('Récupération des données…');
       populateSelects(); setupNav(); setupMobile(); setupModal(); setupFab();
-      setupFilters(); setupImport(); setupSettings();
+      setupFilters(); setupImport(); setupSettings(); setupAuth();
       try {
         var savedSettings = await Store.loadSettings();
         if (savedSettings && savedSettings.budget_mensuel) settings.budget = parseFloat(savedSettings.budget_mensuel);
@@ -1205,16 +1065,61 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
       var labels = keys.map(function(k){ var p=k.split('-'); return new Date(p[0],p[1]-1,1).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}); });
       var deps = keys.map(function(k){ return months[k].dep; });
       var revs = keys.map(function(k){ return months[k].rev; });
+      var soldes = keys.map(function(k){ return months[k].rev - months[k].dep; });
+
       if (chartMonthly) chartMonthly.destroy();
       var ctx = document.getElementById('chart-monthly');
       if (!ctx) return;
+
+      /* Plugin inline : ligne de référence à zéro (tirets) */
+      var zeroLinePlugin = {
+        id: 'zeroLine',
+        afterDraw: function(chart) {
+          var ya = chart.scales.y, xa = chart.scales.x;
+          var y0 = ya.getPixelForValue(0);
+          if (y0 < ya.top || y0 > ya.bottom) return;
+          var c = chart.ctx;
+          c.save(); c.beginPath();
+          c.moveTo(xa.left, y0); c.lineTo(xa.right, y0);
+          c.strokeStyle = 'rgba(168,164,158,0.45)'; c.lineWidth = 1; c.setLineDash([4, 4]);
+          c.stroke(); c.restore();
+        }
+      };
+
       chartMonthly = new Chart(ctx, {
         type: 'bar',
+        plugins: [zeroLinePlugin],
         data: {
           labels: labels,
           datasets: [
             { label: 'Dépenses', data: deps, backgroundColor: 'rgba(198,40,40,0.15)', borderColor: '#C62828', borderWidth: 1.5, borderRadius: 3 },
-            { label: 'Revenus', data: revs, backgroundColor: 'rgba(0,137,123,0.15)', borderColor: '#00897B', borderWidth: 1.5, borderRadius: 3 }
+            { label: 'Revenus',  data: revs, backgroundColor: 'rgba(0,137,123,0.15)',  borderColor: '#00897B', borderWidth: 1.5, borderRadius: 3 },
+            {
+              label: 'Balance',
+              type: 'line',
+              data: soldes,
+              borderWidth: 2,
+              tension: 0.3,
+              fill: false,
+              pointRadius: 4,
+              pointHoverRadius: 7,
+              pointBorderColor: 'transparent',
+              /* Couleur du point selon signe */
+              pointBackgroundColor: function(ctx) {
+                return ctx.raw < 0 ? '#C62828' : '#00897B';
+              },
+              /* Couleur du segment entre deux points (style FTMO) */
+              segment: {
+                borderColor: function(ctx) {
+                  var y0 = ctx.p0.parsed.y, y1 = ctx.p1.parsed.y;
+                  if (y0 >= 0 && y1 >= 0) return '#00897B';
+                  if (y0 <  0 && y1 <  0) return '#C62828';
+                  /* Segment qui croise zéro → couleur du côté dominant */
+                  return (y0 + y1) / 2 >= 0 ? '#00897B' : '#C62828';
+                }
+              },
+              borderColor: '#00897B' /* fallback pour la légende */
+            }
           ]
         },
         options: {
@@ -1541,8 +1446,16 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
       el('periodes-sub').textContent = keys.length + ' période' + (keys.length>1?'s':'') + ' disponible' + (keys.length>1?'s':'');
     }
 
-  } /* end _startApp */
-})();
+    function setupAuth() {
+      var btnLogout = el('btn-logout');
+      if (btnLogout) {
+        btnLogout.addEventListener('click', function() {
+          sb.auth.signOut().then(function() { location.reload(); });
+        });
+      }
+    }
+
+} /* end _startApp */
 
 // ── iOS Native App : bloque pincement-zoom et rubber-banding résiduel ──
 (function(){
