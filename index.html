@@ -635,6 +635,13 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
         <div class="card"><div class="card-title">Dépenses récurrentes</div><div id="perf-recurrent"></div></div>
         <div class="card"><div class="card-title">Moyenne journalière</div><div id="perf-avg"></div></div>
       </div>
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div class="card-title" style="margin-bottom:0">Suivi mensuel du portefeuille</div>
+          <div id="monthly-budget-years" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div id="monthly-budget-table"></div>
+      </div>
     </div>
 
     <!-- TRANSACTIONS -->
@@ -925,6 +932,7 @@ function _startApp() {
     var currentPage = 1, PAGE_SIZE = 25;
     var chartMonthly = null, chartDonut = null;
     var activePeriod = null;
+    var selectedBudgetYear = new Date().getFullYear();
 
     (async function init() {
       showSpinner('Récupération des données…');
@@ -1048,6 +1056,7 @@ function _startApp() {
       renderPerfMonths();
       renderRecurrent(allRows);
       renderAvg(allRows, ym);
+      renderMonthlyBudgetTable();
     }
 
     var CHART_COLORS = ['#00897B','#26A69A','#80CBC4','#004D40','#B2DFDB','#00695C','#4DB6AC','#00796B'];
@@ -1219,6 +1228,70 @@ function _startApp() {
       var daysM = new Set(monthDep.map(function(t){ return t.date; })).size || 1;
       el('perf-avg').innerHTML = "<div class='avg-grid'><div class='avg-item'><div class='avg-item-label'>Moyenne / jour (global)</div><div class='avg-item-val'>"+fmtAbs(avgDay)+"</div><div class='avg-item-sub'>sur "+days+" jour"+(days>1?'s':'')+"</div></div><div class='avg-item'><div class='avg-item-label'>Moyenne / jour (mois)</div><div class='avg-item-val'>"+fmtAbs(totalM/daysM)+"</div><div class='avg-item-sub'>sur "+daysM+" jour"+(daysM>1?'s':'')+"</div></div></div>";
     }
+
+    function renderMonthlyBudgetTable() {
+      /* ── années disponibles ── */
+      var yearsSet = {};
+      data.forEach(function(t) {
+        var ym = (t.date || '').slice(0, 7); if (!ym) return;
+        var m = parseFloat(t.montant);
+        if (m < 0) yearsSet[ym.slice(0, 4)] = true;
+      });
+      var yearKeys = Object.keys(yearsSet).sort().reverse();
+      if (yearKeys.length && yearKeys.indexOf(String(selectedBudgetYear)) === -1) {
+        selectedBudgetYear = parseInt(yearKeys[0]);
+      }
+
+      /* ── pills années ── */
+      var yearsEl = el('monthly-budget-years');
+      if (yearsEl) {
+        yearsEl.innerHTML = yearKeys.map(function(y) {
+          var active = parseInt(y) === selectedBudgetYear;
+          return "<button onclick='setMonthlyYear(" + y + ")' style='" +
+            "padding:4px 14px;border-radius:20px;cursor:pointer;transition:all .12s;" +
+            "font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.04em;" +
+            "border:1px solid " + (active ? 'var(--mint)' : 'var(--border)') + ";" +
+            "background:" + (active ? 'var(--mint)' : 'var(--surface2)') + ";" +
+            "color:" + (active ? '#fff' : 'var(--text2)') + "'>" + y + "</button>";
+        }).join('');
+      }
+
+      /* ── données filtrées sur l'année ── */
+      var months = {};
+      data.forEach(function(t) {
+        var ym = (t.date || '').slice(0, 7); if (!ym) return;
+        if (ym.slice(0, 4) !== String(selectedBudgetYear)) return;
+        if (!months[ym]) months[ym] = 0;
+        var m = parseFloat(t.montant);
+        if (m < 0) months[ym] += Math.abs(m);
+      });
+      var keys = Object.keys(months).sort().reverse();
+      var wrap = el('monthly-budget-table');
+      if (!keys.length) { wrap.innerHTML = "<div class='empty'><p>Aucune donnée pour " + selectedBudgetYear + "</p></div>"; return; }
+
+      var tbody = keys.map(function(ym) {
+        var dep = months[ym];
+        var budget = settings.budget;
+        var diff = budget - dep;
+        var pct = budget > 0 ? Math.round(Math.abs(diff) / budget * 100) : 0;
+        var isOver = diff < 0;
+        var color = isOver ? 'var(--red)' : 'var(--mint)';
+        var diffStr = (isOver ? '− ' : '+ ') + fmtAbs(Math.abs(diff)) + ' (' + pct + '%)';
+        return "<tr>" +
+          "<td style='font-family:var(--mono);font-size:12px;color:var(--text2)'>" + monthLabel(ym) + "</td>" +
+          "<td class='montant-neg'>" + fmtAbs(dep) + "</td>" +
+          "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text)'>" + fmtAbs(budget) + "</td>" +
+          "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:" + color + "'>" + diffStr + "</td>" +
+          "</tr>";
+      }).join('');
+      wrap.innerHTML =
+        "<div class='table-wrap' style='margin-bottom:0'>" +
+        "<table><thead><tr>" +
+        "<th>Mois</th><th>Dépensé</th><th>Portefeuille</th><th>Différence</th>" +
+        "</tr></thead><tbody>" + tbody + "</tbody></table></div>";
+    }
+
+    window.setMonthlyYear = function(y) { selectedBudgetYear = y; renderMonthlyBudgetTable(); };
 
     /* ─ PERIOD NAV ─ */
     window.setPeriod = function(ym) {
