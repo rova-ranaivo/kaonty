@@ -478,6 +478,9 @@ input[type=checkbox]{width:14px;height:14px;accent-color:var(--mint);cursor:poin
   .topbar{flex-wrap:wrap;}
   .topbar-actions{width:100%;}
   .fab{bottom:24px;right:20px;width:48px;height:48px;font-size:22px;}
+  table{min-width:0;}
+  .search-wrap{min-width:0;}
+  .perf-val{min-width:0;}
 }
 @media(max-width:560px){
   .stats-grid{grid-template-columns:1fr;}
@@ -1220,8 +1223,8 @@ function _startApp() {
         "<table><thead><tr>" +
         "<th>Semaine</th><th>Dépensé</th><th>Budget</th><th>Reste</th>" +
         "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
-        "<div style='font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:8px;padding:0 4px'>" +
-        "Logement déduit : " + fmtAbs(logementTotal) + " · Budget hebdo : " + fmtAbs(settings.budget) + " − " + fmtAbs(logementTotal) + " = " + fmtAbs(adjustedBudget) + " ÷ 4</div>";
+        "<div style='font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:8px;padding:0 4px;word-break:break-word'>" +
+        "Logement déduit : " + fmtAbs(logementTotal) + " · Budget hebdo : " + fmtAbs(adjustedBudget) + " ÷ 4</div>";
     }
 
     var CAT_LINE_COLORS = {
@@ -1368,7 +1371,7 @@ function _startApp() {
       var deps = monthRows.filter(function(t){ return parseFloat(t.montant)<0; })
         .sort(function(a,b){ return parseFloat(a.montant) - parseFloat(b.montant); }).slice(0,5);
       if (!deps.length) { el('top5-deps').innerHTML = "<div class='empty'><p>Aucune dépense</p></div>"; return; }
-      var html = "<table style='width:100%;border-collapse:collapse;font-size:12px'><thead><tr style='text-align:left;color:var(--text3);font-family:var(--mono);font-size:10px'><th style='padding:6px 8px'>Date</th><th style='padding:6px 8px'>Catégorie</th><th style='padding:6px 8px'>Description</th><th style='padding:6px 8px;text-align:right'>Montant</th></tr></thead><tbody>";
+      var html = "<table style='width:100%;min-width:0;border-collapse:collapse;font-size:12px'><thead><tr style='text-align:left;color:var(--text3);font-family:var(--mono);font-size:10px'><th style='padding:6px 8px'>Date</th><th style='padding:6px 8px'>Catégorie</th><th style='padding:6px 8px'>Description</th><th style='padding:6px 8px;text-align:right'>Montant</th></tr></thead><tbody>";
       deps.forEach(function(t){
         html += "<tr style='border-top:1px solid rgba(168,164,158,0.15)'>"
           + "<td style='padding:6px 8px;font-family:var(--mono);font-size:11px;white-space:nowrap'>" + fmtDate(t.date) + "</td>"
