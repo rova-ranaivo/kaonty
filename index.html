@@ -234,13 +234,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .badge-gold{background:var(--gold-light);color:var(--gold);}
 
 /* ══ CARDS ══ */
-.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow);}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow);min-width:0;overflow:hidden;}
 .card-title{font-family:var(--serif);font-size:15px;color:var(--text);margin-bottom:16px;letter-spacing:-.01em;}
 .card+.card{margin-top:14px;}
 
 /* ══ GRIDS ══ */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
-.three-col{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;min-width:0;}
+.three-col{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:14px;margin-bottom:16px;min-width:0;}
 
 /* ══ BUDGET BAR ══ */
 .budget-card{margin-bottom:20px;}
@@ -260,7 +260,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .remain.over{color:var(--red);font-weight:500;}
 
 /* ══ TABLE ══ */
-.table-wrap{border-radius:var(--r);border:1px solid var(--border2);overflow:hidden;box-shadow:var(--shadow);overflow-x:auto;margin-bottom:14px;}
+.table-wrap{border-radius:var(--r);border:1px solid var(--border2);overflow:hidden;box-shadow:var(--shadow);overflow-x:auto;margin-bottom:14px;max-width:100%;}
 table{width:100%;border-collapse:collapse;background:var(--surface);min-width:560px;}
 thead th{
   background:var(--surface2);color:var(--text3);
@@ -357,8 +357,8 @@ input[type=checkbox]{width:14px;height:14px;accent-color:var(--mint);cursor:poin
 .close-x:hover{color:var(--text);background:var(--border2);}
 
 /* ══ CHARTS ══ */
-.chart-box{position:relative;height:200px;}
-.donut-box{position:relative;height:200px;display:flex;align-items:center;justify-content:center;}
+.chart-box{position:relative;height:200px;max-width:100%;overflow:hidden;}
+.donut-box{position:relative;height:200px;display:flex;align-items:center;justify-content:center;max-width:100%;overflow:hidden;}
 .donut-legend{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 .donut-legend-item{display:flex;align-items:center;gap:8px;font-size:12.5px;}
 .donut-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
