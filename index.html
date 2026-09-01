@@ -481,14 +481,25 @@ input[type=checkbox]{width:14px;height:14px;accent-color:var(--mint);cursor:poin
 }
 @media(max-width:560px){
   .stats-grid{grid-template-columns:1fr;}
-  .main{padding:12px;padding-top:calc(var(--topbar-h)+12px);}
-  .card{padding:14px 16px;}
+  .main{padding:12px;padding-top:calc(var(--topbar-h)+12px);padding-bottom:calc(70px + env(safe-area-inset-bottom,0px));}
+  .card{padding:14px 12px;}
   .stat-card{padding:14px 16px;}
   .filters{flex-direction:column;align-items:stretch;}
   .settings-row{flex-direction:column;align-items:flex-start;}
   .settings-row-input{width:100%;}
   .settings-row-input input[type=number]{width:100%;}
   .topbar-actions .btn{flex:1;justify-content:center;}
+  table{min-width:0;}
+  thead th{padding:8px 6px;font-size:8.5px;letter-spacing:.05em;}
+  td{padding:8px 6px;font-size:11px;}
+  .page-title{font-size:22px;}
+  .hide-mobile{display:none !important;}
+  .td-desc{max-width:100px;}
+  .stat-val{font-size:16px;}
+  .budget-header{flex-direction:column;gap:4px;}
+  .montant-neg,.montant-pos{font-size:11px;}
+  .topbar-actions{gap:4px;}
+  .topbar-actions .btn{padding:6px 10px;font-size:11px;}
 }
 
 /* ══ TAB BAR MOBILE ══ */
@@ -545,7 +556,7 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
 .app{height:100%;min-height:unset;overflow:hidden;}
 
 /* 5. Seul .main défile — min-height:0 est critique pour overflow en flex */
-.main{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;min-height:0;}
+.main{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;min-height:0;}
 
 /* 6. Modal scrollable indépendamment */
 .modal{-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
@@ -707,9 +718,9 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
       <div class="filters" style="margin-top:-4px">
         <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
           <span style="font-family:var(--mono);font-size:10.5px;color:var(--text3);white-space:nowrap">Du</span>
-          <input type="date" id="f-date-from" style="width:150px;flex-shrink:0"/>
+          <input type="date" id="f-date-from" style="width:150px;min-width:0;flex:1 1 120px"/>
           <span style="font-family:var(--mono);font-size:10.5px;color:var(--text3);white-space:nowrap">au</span>
-          <input type="date" id="f-date-to" style="width:150px;flex-shrink:0"/>
+          <input type="date" id="f-date-to" style="width:150px;min-width:0;flex:1 1 120px"/>
         </div>
         <button class="btn btn-ghost btn-sm" id="btn-reset-filters">✕ Reset</button>
       </div>
@@ -720,9 +731,9 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
             <th class="sortable" data-sort="date">Date ↕</th>
             <th>Catégorie</th>
             <th class="sortable" data-sort="montant">Montant ↕</th>
-            <th>Mode</th>
+            <th class="hide-mobile">Mode</th>
             <th>Description</th>
-            <th style="text-align:center">★</th>
+            <th class="hide-mobile" style="text-align:center">★</th>
             <th></th>
           </tr></thead>
           <tbody id="tx-tbody"></tbody>
@@ -1447,19 +1458,19 @@ function _startApp() {
         var diffStr = (isOver ? '− ' : '+ ') + fmtAbs(Math.abs(diff));
         var pctStr = isOver ? ' (' + (usedPct - 100) + '% au dessus)' : '';
         var overCell = overDate[ym]
-          ? "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:var(--red)'>" + fmtDate(overDate[ym]) + "</td>"
-          : "<td style='font-family:var(--mono);font-size:12px;color:var(--text3)'>—</td>";
+          ? "<td class='hide-mobile' style='font-family:var(--mono);font-size:12px;font-weight:500;color:var(--red)'>" + fmtDate(overDate[ym]) + "</td>"
+          : "<td class='hide-mobile' style='font-family:var(--mono);font-size:12px;color:var(--text3)'>—</td>";
         var topCell = '';
         if (isOver && monthTxs[ym]) {
           var top3 = monthTxs[ym].slice().sort(function(a, b) { return b.amount - a.amount; }).slice(0, 3);
-          topCell = "<td style='font-family:var(--mono);font-size:11px;line-height:1.6'>" +
+          topCell = "<td class='hide-mobile' style='font-family:var(--mono);font-size:11px;line-height:1.6'>" +
             top3.map(function(t) {
               var label = t.description || t.categorie || '';
               if (label.length > 20) label = label.slice(0, 20) + '…';
               return "<span style='color:var(--red);font-weight:500'>" + fmtAbs(t.amount) + "</span> <span style='color:var(--text3)'>" + escHtml(label) + "</span>";
             }).join('<br>') + "</td>";
         } else {
-          topCell = "<td></td>";
+          topCell = "<td class='hide-mobile'></td>";
         }
         return "<tr>" +
           "<td style='font-family:var(--mono);font-size:12px;color:var(--text2)'>" + monthLabel(ym) + "</td>" +
@@ -1473,7 +1484,7 @@ function _startApp() {
       wrap.innerHTML =
         "<div class='table-wrap' style='margin-bottom:0'>" +
         "<table><thead><tr>" +
-        "<th>Mois</th><th>Dépensé</th><th>Budget</th><th>Différence</th><th>Dépassement</th><th>Top dépenses</th>" +
+        "<th>Mois</th><th>Dépensé</th><th>Budget</th><th>Différence</th><th class='hide-mobile'>Dépassement</th><th class='hide-mobile'>Top dépenses</th>" +
         "</tr></thead><tbody>" + tbody + "</tbody></table></div>";
     }
 
@@ -1547,7 +1558,7 @@ function _startApp() {
       if (!pageRows.length) { tbody.innerHTML = "<tr><td colspan='7'><div class='empty'><div class='empty-icon'>↑↓</div><p>Aucune transaction trouvée</p></div></td></tr>"; el('tx-pagination').innerHTML = ''; return; }
       tbody.innerHTML = pageRows.map(function(t){
         var m = parseFloat(t.montant);
-        return "<tr><td class='td-date'>"+fmtDate(t.date)+"</td><td><span class='cat-pill "+catClass(t.categorie)+"'>"+t.categorie+"</span></td><td class='"+(m<0?'montant-neg':'montant-pos')+"'>"+fmtSign(m)+"</td><td style='font-family:var(--mono);font-size:11.5px;color:var(--text3)'>"+t.mode+"</td><td class='td-desc' title='"+t.description.replace(/'/g,"&#39;")+"'>"+escHtml(t.description)+"</td><td style='text-align:center;color:"+(t.important?'var(--gold)':'var(--border)')+"'>"+(t.important?'★':'★')+"</td><td style='white-space:nowrap'><button class='icon-btn edit' onclick='openEdit(\""+t.id+"\")' title='Modifier'>✏</button> <button class='icon-btn del' onclick='deleteTx(\""+t.id+"\")' title='Supprimer'>✕</button></td></tr>";
+        return "<tr><td class='td-date'>"+fmtDate(t.date)+"</td><td><span class='cat-pill "+catClass(t.categorie)+"'>"+t.categorie+"</span></td><td class='"+(m<0?'montant-neg':'montant-pos')+"'>"+fmtSign(m)+"</td><td class='hide-mobile' style='font-family:var(--mono);font-size:11.5px;color:var(--text3)'>"+t.mode+"</td><td class='td-desc' title='"+t.description.replace(/'/g,"&#39;")+"'>"+escHtml(t.description)+"</td><td class='hide-mobile' style='text-align:center;color:"+(t.important?'var(--gold)':'var(--border)')+"'>"+(t.important?'★':'★')+"</td><td style='white-space:nowrap'><button class='icon-btn edit' onclick='openEdit(\""+t.id+"\")' title='Modifier'>✏</button> <button class='icon-btn del' onclick='deleteTx(\""+t.id+"\")' title='Supprimer'>✕</button></td></tr>";
       }).join('');
       renderPagination(total, totalPages);
     }
@@ -1710,9 +1721,9 @@ function _startApp() {
             "<td style='font-family:var(--mono);font-size:12px;color:var(--text2)'>" + fmtDate(t.date) + "</td>" +
             "<td><span class='cat-pill " + catClass(t.categorie) + "'>" + escHtml(t.categorie || '—') + "</span></td>" +
             "<td class='" + montantClass + "'>" + fmtSign(parseFloat(t.montant)) + "</td>" +
-            "<td style='font-size:12px;color:var(--text2)'>" + escHtml(t.mode || '') + "</td>" +
-            "<td style='font-size:12px'>" + escHtml(t.description || '—') + "</td>" +
-            "<td><button class='btn btn-danger btn-sm' onclick='deleteTxAnomaly(\"" + t.id + "\")'>Supprimer</button></td>" +
+            "<td class='hide-mobile' style='font-size:12px;color:var(--text2)'>" + escHtml(t.mode || '') + "</td>" +
+            "<td class='hide-mobile' style='font-size:12px'>" + escHtml(t.description || '—') + "</td>" +
+            "<td><button class='btn btn-danger btn-sm' onclick='deleteTxAnomaly(\"" + t.id + "\")'>Suppr.</button></td>" +
             "</tr>";
         }).join('');
         return "<div class='card' style='margin-bottom:12px'>" +
@@ -1722,7 +1733,7 @@ function _startApp() {
           "<span class='" + montantClass + "' style='font-family:var(--mono);font-size:13px'>" + fmtSign(m) + "</span>" +
           "</div>" +
           "<div class='table-wrap' style='margin-bottom:0'><table><thead><tr>" +
-          "<th>Date</th><th>Catégorie</th><th>Montant</th><th>Mode</th><th>Description</th><th></th>" +
+          "<th>Date</th><th>Catégorie</th><th>Montant</th><th class='hide-mobile'>Mode</th><th class='hide-mobile'>Description</th><th></th>" +
           "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
       }).join('');
 
