@@ -585,6 +585,7 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
     <button class="nav-btn" data-page="transactions"><span class="nav-icon">⇅</span> Transactions</button>
     <div class="nav-section">Outils</div>
     <button class="nav-btn" data-page="periodes"><span class="nav-icon">▦</span> Périodes</button>
+    <button class="nav-btn" data-page="anomalies"><span class="nav-icon">⚠</span> Anomalies</button>
     <button class="nav-btn" data-page="import"><span class="nav-icon">⇑</span> Importer CSV</button>
     <button class="nav-btn" data-page="parametres"><span class="nav-icon">◎</span> Paramètres</button>
 
@@ -623,16 +624,17 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
         <div class="stat-card"><div class="stat-label">Important ⭐</div><div class="stat-val gold" id="s-imp">—</div><div class="stat-sub">marquées importantes</div></div>
       </div>
       <div class="three-col">
-        <div class="card"><div class="card-title">Flux mensuel</div><div class="chart-box" style="height:230px"><canvas id="chart-monthly"></canvas></div></div>
+        <div class="card"><div class="card-title">Suivi hebdomadaire</div><div id="weekly-budget-table"></div></div>
         <div class="card"><div class="card-title">Dépenses du mois</div><div class="donut-box" id="donut-wrap"><canvas id="chart-donut"></canvas></div><div class="donut-legend" id="donut-legend"></div></div>
         <div class="card"><div class="card-title">Par catégorie</div><div id="cat-bars"></div></div>
       </div>
+      <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px"><div class="card-title" style="margin-bottom:0">Dépenses par catégorie (évolution)</div><button class="btn btn-ghost btn-sm" id="btn-toggle-cat-lines">Tout cacher</button></div><div class="chart-box" style="height:300px"><canvas id="chart-cat-lines"></canvas></div></div>
       <div class="two-col" id="perf-grid">
-        <div class="card"><div class="card-title">Jours les plus dépensiers</div><div id="perf-days"></div></div>
+        <div class="card"><div class="card-title">Dépenses par catégorie · <span id="cat-month-label">mois en cours</span></div><div id="cat-month-bars"></div></div>
         <div class="card"><div class="card-title">Mois les plus dépensiers</div><div id="perf-months"></div></div>
       </div>
       <div class="two-col">
-        <div class="card"><div class="card-title">Dépenses récurrentes</div><div id="perf-recurrent"></div></div>
+        <div class="card"><div class="card-title">Top 5 dépenses · <span id="top5-month-label">mois en cours</span></div><div id="top5-deps"></div></div>
         <div class="card"><div class="card-title">Moyenne journalière</div><div id="perf-avg"></div></div>
       </div>
       <div class="card" style="margin-top:14px">
@@ -688,6 +690,12 @@ body{overflow:hidden;height:100%;overscroll-behavior:none;}
         </table>
       </div>
       <div id="tx-pagination"></div>
+    </div>
+
+    <!-- ANOMALIES -->
+    <div class="page" id="page-anomalies">
+      <div class="topbar"><div><div class="page-title">Anomalies</div><div class="page-sub">Transactions potentiellement dupliquées</div></div></div>
+      <div id="anomalies-content"></div>
     </div>
 
     <!-- IMPORT -->
@@ -930,7 +938,7 @@ function _startApp() {
     var sortField = 'date', sortDir = 'desc';
     var filterSearch = '', filterCat = '', filterType = '', filterDateFrom = '', filterDateTo = '';
     var currentPage = 1, PAGE_SIZE = 25;
-    var chartMonthly = null, chartDonut = null;
+    var chartMonthly = null, chartDonut = null, chartCatLines = null;
     var activePeriod = null;
     var selectedBudgetYear = new Date().getFullYear();
 
@@ -986,6 +994,7 @@ function _startApp() {
       if (btn) btn.classList.add('active');
       if (pageId === 'transactions') { renderTable(); }
       if (pageId === 'periodes') { renderPeriodes(); }
+      if (pageId === 'anomalies') { renderAnomalies(); }
       if (pageId === 'parametres') { renderSettings(); }
     }
     function setupMobile() {
@@ -1049,12 +1058,13 @@ function _startApp() {
       el('s-rev-sub').textContent = allRows.filter(function(t){ return parseFloat(t.montant)>0; }).length + ' transactions';
       el('s-imp').textContent = imp;
 
-      renderMonthlyChart(rows);
+      renderWeeklyBudget(monthRows, ym);
+      renderCatLinesChart(rows);
       renderDonut(monthRows);
       renderCatBars(allRows);
-      renderPerfDays(allRows);
+      renderCatMonthBars(monthRows, ym);
       renderPerfMonths();
-      renderRecurrent(allRows);
+      renderTop5Deps(monthRows, ym);
       renderAvg(allRows, ym);
       renderMonthlyBudgetTable();
     }
@@ -1062,84 +1072,152 @@ function _startApp() {
     var CHART_COLORS = ['#00897B','#26A69A','#80CBC4','#004D40','#B2DFDB','#00695C','#4DB6AC','#00796B'];
     var DONUT_COLORS = ['#00897B','#26C6DA','#7E57C2','#FF7043','#42A5F5','#FFA726','#66BB6A'];
 
-    function renderMonthlyChart(rows) {
-      var months = {};
-      rows.forEach(function(t){
-        var ym = (t.date||'').slice(0,7); if(!ym) return;
-        if(!months[ym]) months[ym]={dep:0,rev:0};
+    function renderWeeklyBudget(monthRows, ym) {
+      var wrap = el('weekly-budget-table');
+      if (!wrap) return;
+
+      // Calculer le total Logement du mois et le déduire du budget
+      var logementTotal = 0;
+      monthRows.forEach(function(t) {
         var m = parseFloat(t.montant);
-        if(m<0) months[ym].dep += Math.abs(m); else months[ym].rev += m;
+        if (m < 0 && t.categorie === 'Logement') logementTotal += Math.abs(m);
       });
-      var keys = Object.keys(months).sort().slice(-12);
-      var labels = keys.map(function(k){ var p=k.split('-'); return new Date(p[0],p[1]-1,1).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}); });
-      var deps = keys.map(function(k){ return months[k].dep; });
-      var revs = keys.map(function(k){ return months[k].rev; });
-      var soldes = keys.map(function(k){ return months[k].rev - months[k].dep; });
+      var adjustedBudget = settings.budget - logementTotal;
+      var weekBudget = Math.round(adjustedBudget / 4);
 
-      if (chartMonthly) chartMonthly.destroy();
-      var ctx = document.getElementById('chart-monthly');
-      if (!ctx) return;
+      var parts = ym.split('-');
+      var year = parseInt(parts[0]), month = parseInt(parts[1]) - 1;
+      var lastDay = new Date(year, month + 1, 0);
+      var totalDays = lastDay.getDate();
 
-      /* Plugin inline : ligne de référence à zéro (tirets) */
-      var zeroLinePlugin = {
-        id: 'zeroLine',
-        afterDraw: function(chart) {
-          var ya = chart.scales.y, xa = chart.scales.x;
-          var y0 = ya.getPixelForValue(0);
-          if (y0 < ya.top || y0 > ya.bottom) return;
-          var c = chart.ctx;
-          c.save(); c.beginPath();
-          c.moveTo(xa.left, y0); c.lineTo(xa.right, y0);
-          c.strokeStyle = 'rgba(168,164,158,0.45)'; c.lineWidth = 1; c.setLineDash([4, 4]);
-          c.stroke(); c.restore();
+      var weeks = [
+        { label: 'Semaine 1', from: 1, to: 7 },
+        { label: 'Semaine 2', from: 8, to: 14 },
+        { label: 'Semaine 3', from: 15, to: 21 },
+        { label: 'Semaine 4', from: 22, to: totalDays }
+      ];
+
+      var today = new Date();
+      var currentWeek = -1;
+      if (today.getFullYear() === year && today.getMonth() === month) {
+        var d = today.getDate();
+        for (var i = 0; i < weeks.length; i++) {
+          if (d >= weeks[i].from && d <= weeks[i].to) { currentWeek = i; break; }
         }
-      };
+      }
 
-      chartMonthly = new Chart(ctx, {
-        type: 'bar',
-        plugins: [zeroLinePlugin],
-        data: {
-          labels: labels,
-          datasets: [
-            { label: 'Dépenses', data: deps, backgroundColor: 'rgba(198,40,40,0.15)', borderColor: '#C62828', borderWidth: 1.5, borderRadius: 3 },
-            { label: 'Revenus',  data: revs, backgroundColor: 'rgba(0,137,123,0.15)',  borderColor: '#00897B', borderWidth: 1.5, borderRadius: 3 },
-            {
-              label: 'Balance',
-              type: 'line',
-              data: soldes,
-              borderWidth: 2,
-              tension: 0.3,
-              fill: false,
-              pointRadius: 4,
-              pointHoverRadius: 7,
-              pointBorderColor: 'transparent',
-              /* Couleur du point selon signe */
-              pointBackgroundColor: function(ctx) {
-                return ctx.raw < 0 ? '#C62828' : '#00897B';
-              },
-              /* Couleur du segment entre deux points (style FTMO) */
-              segment: {
-                borderColor: function(ctx) {
-                  var y0 = ctx.p0.parsed.y, y1 = ctx.p1.parsed.y;
-                  if (y0 >= 0 && y1 >= 0) return '#00897B';
-                  if (y0 <  0 && y1 <  0) return '#C62828';
-                  /* Segment qui croise zéro → couleur du côté dominant */
-                  return (y0 + y1) / 2 >= 0 ? '#00897B' : '#C62828';
-                }
-              },
-              borderColor: '#00897B' /* fallback pour la légende */
-            }
-          ]
-        },
+      // Dépenses par semaine (hors Logement)
+      var weekDeps = [0, 0, 0, 0];
+      monthRows.forEach(function(t) {
+        var m = parseFloat(t.montant);
+        if (m >= 0 || t.categorie === 'Logement') return;
+        var day = parseInt((t.date || '').slice(8, 10));
+        for (var i = 0; i < weeks.length; i++) {
+          if (day >= weeks[i].from && day <= weeks[i].to) { weekDeps[i] += Math.abs(m); break; }
+        }
+      });
+
+      var rows = weeks.map(function(w, i) {
+        var dep = weekDeps[i];
+        var diff = weekBudget - dep;
+        var isOver = diff < 0;
+        var isCurrent = i === currentWeek;
+        var color = isOver ? 'var(--red)' : 'var(--mint)';
+        var diffStr = (isOver ? '− ' : '+ ') + fmtAbs(Math.abs(diff));
+        var highlight = isCurrent ? "background:var(--mint-light);font-weight:600;" : "";
+        var badge = isCurrent ? " <span style='font-size:9px;background:var(--mint);color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle'>en cours</span>" : "";
+        return "<tr style='" + highlight + "'>" +
+          "<td style='font-family:var(--mono);font-size:12px;color:var(--text2)'>" + w.label + badge +
+            "<div style='font-size:10px;color:var(--text3);font-weight:400'>" + w.from + "–" + w.to + " " + monthLabel(ym).split(' ')[0] + "</div></td>" +
+          "<td class='montant-neg' style='font-family:var(--mono);font-size:12px'>" + fmtAbs(dep) + "</td>" +
+          "<td style='font-family:var(--mono);font-size:12px;color:var(--text)'>" + fmtAbs(weekBudget) + "</td>" +
+          "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:" + color + "'>" + diffStr + "</td>" +
+          "</tr>";
+      }).join('');
+
+      wrap.innerHTML =
+        "<div class='table-wrap' style='margin-bottom:0'>" +
+        "<table><thead><tr>" +
+        "<th>Semaine</th><th>Dépensé</th><th>Budget</th><th>Reste</th>" +
+        "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+        "<div style='font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:8px;padding:0 4px'>" +
+        "Logement déduit : " + fmtAbs(logementTotal) + " · Budget hebdo : " + fmtAbs(settings.budget) + " − " + fmtAbs(logementTotal) + " = " + fmtAbs(adjustedBudget) + " ÷ 4</div>";
+    }
+
+    var CAT_LINE_COLORS = {
+      'Utils': '#1565C0',
+      'Loisirs / Evenement': '#7E57C2',
+      'Courses (Alimentation)': '#FF7043',
+      'Eating out': '#26C6DA',
+      'Logement': '#C62828',
+      'Abonnement': '#FFA726',
+      'Autres': '#66BB6A'
+    };
+
+    function renderCatLinesChart(rows) {
+      var monthCat = {};
+      rows.filter(function(t){ return parseFloat(t.montant) < 0; }).forEach(function(t){
+        var ym = (t.date||'').slice(0,7); if(!ym) return;
+        var cat = t.categorie || 'Autres';
+        if(!monthCat[ym]) monthCat[ym] = {};
+        monthCat[ym][cat] = (monthCat[ym][cat] || 0) + Math.abs(parseFloat(t.montant));
+      });
+      var keys = Object.keys(monthCat).sort().slice(-12);
+      var labels = keys.map(function(k){ var p=k.split('-'); return new Date(p[0],p[1]-1,1).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'}); });
+
+      var catsUsed = {};
+      keys.forEach(function(ym){ Object.keys(monthCat[ym]).forEach(function(c){ catsUsed[c] = true; }); });
+      var catList = Object.keys(catsUsed).sort();
+
+      var datasets = catList.map(function(cat){
+        var color = CAT_LINE_COLORS[cat] || '#A8A49E';
+        return {
+          label: cat,
+          data: keys.map(function(ym){ return monthCat[ym][cat] || 0; }),
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: 2,
+          tension: 0.3,
+          fill: false,
+          pointRadius: 3,
+          pointHoverRadius: 6
+        };
+      });
+
+      if (chartCatLines) chartCatLines.destroy();
+      var ctx = document.getElementById('chart-cat-lines');
+      if (!ctx) return;
+      if (!keys.length) return;
+
+      chartCatLines = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: true, position: 'bottom', labels: { font: { family: 'DM Mono', size: 10 }, color: '#A8A49E', boxWidth: 10, padding: 12 } } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { font: { family: 'DM Mono', size: 10 }, color: '#A8A49E', boxWidth: 10, padding: 12, usePointStyle: true } },
+            tooltip: { callbacks: { label: function(ctx){ return ' ' + ctx.dataset.label + ' : ' + fmtAbs(ctx.raw); } } }
+          },
           scales: {
             x: { grid: { display: false }, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#A8A49E' } },
             y: { grid: { color: 'rgba(168,164,158,0.1)' }, ticks: { font: { family: 'DM Mono', size: 9 }, color: '#A8A49E', callback: function(v){ return (v/1000).toFixed(0)+'k'; } } }
           }
         }
       });
+
+      var btnToggle = document.getElementById('btn-toggle-cat-lines');
+      if (btnToggle) {
+        btnToggle.onclick = function() {
+          if (!chartCatLines) return;
+          var allHidden = chartCatLines.data.datasets.every(function(ds, i){ return chartCatLines.getDatasetMeta(i).hidden; });
+          chartCatLines.data.datasets.forEach(function(ds, i){
+            chartCatLines.getDatasetMeta(i).hidden = allHidden ? null : true;
+          });
+          chartCatLines.update();
+          btnToggle.textContent = allHidden ? 'Tout cacher' : 'Tout afficher';
+        };
+      }
     }
 
     function renderDonut(rows) {
@@ -1179,17 +1257,17 @@ function _startApp() {
       el('cat-bars').innerHTML = html || "<div style='font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;padding:20px'>Aucune dépense</div>";
     }
 
-    function renderPerfDays(rows) {
-      var days = {};
-      rows.filter(function(t){ return parseFloat(t.montant)<0; }).forEach(function(t){
-        var d = t.date||''; if(!d) return;
-        days[d] = (days[d]||0) + Math.abs(parseFloat(t.montant));
+    function renderCatMonthBars(monthRows, ym) {
+      el('cat-month-label').textContent = monthLabel(ym);
+      var cats = {};
+      monthRows.filter(function(t){ return parseFloat(t.montant)<0; }).forEach(function(t){
+        var c = t.categorie||'Autres';
+        cats[c] = (cats[c]||0) + Math.abs(parseFloat(t.montant));
       });
-      var sorted = Object.entries(days).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
-      var max = sorted.length ? sorted[0][1] : 1;
-      el('perf-days').innerHTML = sorted.length ? sorted.map(function(e,i){
-        return "<div class='perf-row'><span class='perf-rank'>"+(i+1)+"</span><span class='perf-label'>"+fmtDate(e[0])+"</span><div class='perf-bar-wrap'><div class='perf-bar-bg2'><div class='perf-bar-fill2' style='width:"+Math.round(e[1]/max*100)+"%'></div></div></div><span class='perf-val'>"+fmtAbs(e[1])+"</span></div>";
-      }).join('') : "<div class='empty'><p>Aucune donnée</p></div>";
+      var entries = Object.entries(cats).sort(function(a,b){ return b[1]-a[1]; });
+      var max = entries.length ? entries[0][1] : 1;
+      var html = entries.map(function(e){ return "<div class='prog-row'><div class='prog-top'><span style='font-size:12px'>"+e[0]+"</span><span style='font-family:var(--mono);font-size:11px;color:var(--text3)'>"+fmtAbs(e[1])+"</span></div><div class='prog-bg'><div class='prog-fill' style='width:"+Math.round(e[1]/max*100)+"%'></div></div></div>"; }).join('');
+      el('cat-month-bars').innerHTML = html || "<div style='font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;padding:20px'>Aucune dépense</div>";
     }
 
     function renderPerfMonths() {
@@ -1205,16 +1283,22 @@ function _startApp() {
       }).join('') : "<div class='empty'><p>Aucune donnée</p></div>";
     }
 
-    function renderRecurrent(rows) {
-      var cats = {};
-      rows.filter(function(t){ return parseFloat(t.montant)<0; }).forEach(function(t){
-        var c = t.categorie||'Autres'; if(!cats[c]) cats[c]={count:0,total:0};
-        cats[c].count++; cats[c].total += Math.abs(parseFloat(t.montant));
+    function renderTop5Deps(monthRows, ym) {
+      el('top5-month-label').textContent = monthLabel(ym);
+      var deps = monthRows.filter(function(t){ return parseFloat(t.montant)<0; })
+        .sort(function(a,b){ return parseFloat(a.montant) - parseFloat(b.montant); }).slice(0,5);
+      if (!deps.length) { el('top5-deps').innerHTML = "<div class='empty'><p>Aucune dépense</p></div>"; return; }
+      var html = "<table style='width:100%;border-collapse:collapse;font-size:12px'><thead><tr style='text-align:left;color:var(--text3);font-family:var(--mono);font-size:10px'><th style='padding:6px 8px'>Date</th><th style='padding:6px 8px'>Catégorie</th><th style='padding:6px 8px'>Description</th><th style='padding:6px 8px;text-align:right'>Montant</th></tr></thead><tbody>";
+      deps.forEach(function(t){
+        html += "<tr style='border-top:1px solid rgba(168,164,158,0.15)'>"
+          + "<td style='padding:6px 8px;font-family:var(--mono);font-size:11px;white-space:nowrap'>" + fmtDate(t.date) + "</td>"
+          + "<td style='padding:6px 8px'><span class='cat-pill " + catClass(t.categorie) + "'>" + escHtml(t.categorie||'Autres') + "</span></td>"
+          + "<td style='padding:6px 8px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>" + escHtml(t.description||'—') + "</td>"
+          + "<td style='padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--red);font-weight:600'>" + fmtAbs(Math.abs(parseFloat(t.montant))) + "</td>"
+          + "</tr>";
       });
-      var sorted = Object.entries(cats).filter(function(e){ return e[1].count >= 2; }).sort(function(a,b){ return b[1].total-a[1].total; }).slice(0,5);
-      el('perf-recurrent').innerHTML = sorted.length ? sorted.map(function(e,i){
-        return "<div class='perf-row'><span class='perf-rank'>"+(i+1)+"</span><span class='perf-label'>"+e[0]+"<span style='font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:6px'>×"+e[1].count+"</span></span><span class='perf-val'>"+fmtAbs(e[1].total)+"</span></div>";
-      }).join('') : "<div class='empty'><p>Aucune dépense récurrente</p></div>";
+      html += "</tbody></table>";
+      el('top5-deps').innerHTML = html;
     }
 
     function renderAvg(rows, ym) {
@@ -1258,12 +1342,27 @@ function _startApp() {
 
       /* ── données filtrées sur l'année ── */
       var months = {};
+      var monthTxs = {}; // transactions par mois triées par date
       data.forEach(function(t) {
         var ym = (t.date || '').slice(0, 7); if (!ym) return;
         if (ym.slice(0, 4) !== String(selectedBudgetYear)) return;
         if (!months[ym]) months[ym] = 0;
         var m = parseFloat(t.montant);
-        if (m < 0) months[ym] += Math.abs(m);
+        if (m < 0) {
+          months[ym] += Math.abs(m);
+          if (!monthTxs[ym]) monthTxs[ym] = [];
+          monthTxs[ym].push({ date: t.date, amount: Math.abs(m), description: t.description || '', categorie: t.categorie || '' });
+        }
+      });
+      // Calculer la date de dépassement du budget par mois
+      var overDate = {};
+      Object.keys(monthTxs).forEach(function(ym) {
+        var txs = monthTxs[ym].slice().sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+        var cumul = 0;
+        for (var i = 0; i < txs.length; i++) {
+          cumul += txs[i].amount;
+          if (cumul > settings.budget) { overDate[ym] = txs[i].date; break; }
+        }
       });
       var keys = Object.keys(months).sort().reverse();
       var wrap = el('monthly-budget-table');
@@ -1273,21 +1372,39 @@ function _startApp() {
         var dep = months[ym];
         var budget = settings.budget;
         var diff = budget - dep;
-        var pct = budget > 0 ? Math.round(Math.abs(diff) / budget * 100) : 0;
+        var usedPct = budget > 0 ? Math.round(dep / budget * 100) : 0;
         var isOver = diff < 0;
         var color = isOver ? 'var(--red)' : 'var(--mint)';
-        var diffStr = (isOver ? '− ' : '+ ') + fmtAbs(Math.abs(diff)) + ' (' + pct + '%)';
+        var diffStr = (isOver ? '− ' : '+ ') + fmtAbs(Math.abs(diff));
+        var pctStr = isOver ? ' (' + (usedPct - 100) + '% au dessus)' : '';
+        var overCell = overDate[ym]
+          ? "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:var(--red)'>" + fmtDate(overDate[ym]) + "</td>"
+          : "<td style='font-family:var(--mono);font-size:12px;color:var(--text3)'>—</td>";
+        var topCell = '';
+        if (isOver && monthTxs[ym]) {
+          var top3 = monthTxs[ym].slice().sort(function(a, b) { return b.amount - a.amount; }).slice(0, 3);
+          topCell = "<td style='font-family:var(--mono);font-size:11px;line-height:1.6'>" +
+            top3.map(function(t) {
+              var label = t.description || t.categorie || '';
+              if (label.length > 20) label = label.slice(0, 20) + '…';
+              return "<span style='color:var(--red);font-weight:500'>" + fmtAbs(t.amount) + "</span> <span style='color:var(--text3)'>" + escHtml(label) + "</span>";
+            }).join('<br>') + "</td>";
+        } else {
+          topCell = "<td></td>";
+        }
         return "<tr>" +
           "<td style='font-family:var(--mono);font-size:12px;color:var(--text2)'>" + monthLabel(ym) + "</td>" +
           "<td class='montant-neg'>" + fmtAbs(dep) + "</td>" +
           "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text)'>" + fmtAbs(budget) + "</td>" +
-          "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:" + color + "'>" + diffStr + "</td>" +
+          "<td style='font-family:var(--mono);font-size:12px;font-weight:500;color:" + color + "'>" + diffStr + "<span style='font-size:11px;opacity:.8'>" + pctStr + "</span></td>" +
+          overCell +
+          topCell +
           "</tr>";
       }).join('');
       wrap.innerHTML =
         "<div class='table-wrap' style='margin-bottom:0'>" +
         "<table><thead><tr>" +
-        "<th>Mois</th><th>Dépensé</th><th>Portefeuille</th><th>Différence</th>" +
+        "<th>Mois</th><th>Dépensé</th><th>Budget</th><th>Différence</th><th>Dépassement</th><th>Top dépenses</th>" +
         "</tr></thead><tbody>" + tbody + "</tbody></table></div>";
     }
 
@@ -1489,6 +1606,71 @@ function _startApp() {
         hideSpinner();
       });
     }
+    /* ─ ANOMALIES (doublons) ─ */
+    function renderAnomalies() {
+      var wrap = el('anomalies-content');
+      // Grouper par clé montant+description
+      var groups = {};
+      data.forEach(function(t) {
+        var key = String(t.montant) + '||' + (t.description || '').trim().toLowerCase();
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
+      // Ne garder que les groupes avec doublons
+      var dupes = Object.keys(groups).filter(function(k) { return groups[k].length > 1; })
+        .sort(function(a, b) { return groups[b].length - groups[a].length; });
+
+      if (!dupes.length) {
+        wrap.innerHTML = "<div class='card'><div class='empty'><p>Aucune anomalie détectée</p></div></div>";
+        return;
+      }
+
+      var total = dupes.reduce(function(s, k) { return s + groups[k].length; }, 0);
+      var html = "<div class='card' style='margin-bottom:16px'>" +
+        "<div style='display:flex;align-items:center;gap:12px;flex-wrap:wrap'>" +
+        "<span style='font-family:var(--mono);font-size:13px;color:var(--text2)'>" + dupes.length + " groupe" + (dupes.length > 1 ? 's' : '') + " de doublons · " + total + " transactions concernées</span>" +
+        "</div></div>";
+
+      html += dupes.map(function(key) {
+        var txs = groups[key];
+        var first = txs[0];
+        var m = parseFloat(first.montant);
+        var montantClass = m < 0 ? 'montant-neg' : 'montant-pos';
+        var rows = txs.map(function(t) {
+          return "<tr>" +
+            "<td style='font-family:var(--mono);font-size:12px;color:var(--text2)'>" + fmtDate(t.date) + "</td>" +
+            "<td><span class='cat-pill " + catClass(t.categorie) + "'>" + escHtml(t.categorie || '—') + "</span></td>" +
+            "<td class='" + montantClass + "'>" + fmtSign(parseFloat(t.montant)) + "</td>" +
+            "<td style='font-size:12px;color:var(--text2)'>" + escHtml(t.mode || '') + "</td>" +
+            "<td style='font-size:12px'>" + escHtml(t.description || '—') + "</td>" +
+            "<td><button class='btn btn-danger btn-sm' onclick='deleteTxAnomaly(\"" + t.id + "\")'>Supprimer</button></td>" +
+            "</tr>";
+        }).join('');
+        return "<div class='card' style='margin-bottom:12px'>" +
+          "<div style='display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap'>" +
+          "<span style='font-family:var(--mono);font-size:12px;font-weight:600;color:var(--red)'>" + txs.length + "×</span>" +
+          "<span style='font-size:13px;font-weight:500'>" + escHtml(first.description || '—') + "</span>" +
+          "<span class='" + montantClass + "' style='font-family:var(--mono);font-size:13px'>" + fmtSign(m) + "</span>" +
+          "</div>" +
+          "<div class='table-wrap' style='margin-bottom:0'><table><thead><tr>" +
+          "<th>Date</th><th>Catégorie</th><th>Montant</th><th>Mode</th><th>Description</th><th></th>" +
+          "</tr></thead><tbody>" + rows + "</tbody></table></div></div>";
+      }).join('');
+
+      wrap.innerHTML = html;
+    }
+
+    window.deleteTxAnomaly = function(id) {
+      if (!confirm('Supprimer cette transaction ?')) return;
+      showSpinner('Suppression…');
+      Store.deleteTransaction(id).then(function() {
+        data = data.filter(function(t) { return t.id !== id; });
+        hideSpinner();
+        renderAnomalies();
+        updateSidebarInfo();
+      }).catch(function(e) { hideSpinner(); alert('Erreur : ' + e.message); });
+    };
+
     function renderSettings(){ el('param-budget').value=settings.budget; el('settings-cats-count').textContent=CATEGORIES.length+' catégories'; el('settings-tx-count').textContent=data.length+' transaction'+(data.length!==1?'s':''); }
 
     function renderPeriodes() {
