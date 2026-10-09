@@ -1149,6 +1149,8 @@ body:has(.modal-overlay.open) .main{overflow:hidden;}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important;transition:none !important;scroll-behavior:auto !important;}
+  /* Indicateur de chargement = mouvement utile (comme les spinners iOS) : on garde le tracé de la vague, sans zoom */
+  .spinner-mark .wave{animation:spinner-wave 1.8s cubic-bezier(.65,0,.35,1) infinite !important;}
 }
 </style>
 </head>
