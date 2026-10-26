@@ -15,7 +15,8 @@ Supabase (`@supabase/supabase-js@2`, CDN) · Chart.js 4.4.1 (CDN) · Français �
 | JS | `§JS-SUPABASE` · `§JS-AUTH` · `§JS-APP` (début de `_startApp()`) · `§JS-ICONS` · `§JS-CHART-THEME` · `§JS-STORE` · `§JS-STATE` · `§JS-UTILS` · `§JS-NAV` · `§JS-DASHBOARD` · `§JS-CHARTS` · `§JS-BUDGET-TABLE` · `§JS-TRANSACTIONS` · `§JS-MODAL` · `§JS-IMPORT` · `§JS-SETTINGS` · `§JS-ANOMALIES` · `§JS-PERIODES` · `§JS-IOS` |
 
 - Nouvelle section ? Ajouter un repère `§` et la ligne correspondante ici. Pas de numéros de ligne dans ce fichier.
-- Après une modif JS, vérifier la syntaxe en extrayant les blocs `<script>` et en lançant `node --check`.
+- Après une modif JS, vérifier la syntaxe : `.\check.ps1` (extrait les `<script>` inline et lance `node --check`).
+- Garder les lignes courtes (< ~200 car.) : un gabarit HTML en JS = une concaténation par élément, une instruction par ligne.
 
 ## Structure
 
@@ -56,7 +57,7 @@ Toute modif visuelle se fait dans `§CSS-APPLE` (elle gagne la cascade). Ne pas 
 - Par catégorie : couleur `catColor`, série la plus lourde mise en avant. Sans catégorie : 1er élément `--ch-neg`, le reste `--ch-neu`.
 - Plugin `editorial` : trait au bout des barres / lollipop, `endLabels` (clic = masquer la série, remplace la légende), `refLines`.
 - `lollipopRows(entries, labelFn, colorFn?)` pour les barres HTML (`.lolli*`, `--p`).
-- `#cat-lines-unit` : Semaine (16 semaines lun→dim, défaut) / Mois (12 mois). Courbes `monotone` ; dégradé (alpha ≤ .16) sur la série clé seulement. Redessin quand le thème change.
+- `#cat-lines-unit` : Ce mois (semaines lun→dim du mois affiché, bornées au mois, défaut) / Semaine (16 semaines) / Mois (12 mois). Courbes `monotone` ; dégradé (alpha ≤ .16) sur la série clé seulement. Redessin quand le thème change.
 
 **Responsive / iOS** (`§CSS-MOBILE`)
 - `≤ 900px` : sidebar masquée, header translucide + tab bar iOS, `#btn-add` masqué. `≤ 600px` : transactions en cartes (grid sur `#tx-tbody tr`).
